@@ -58,8 +58,8 @@
         "universal-cookie": "^4.0.4"
     },
     "scripts": {
-        "start": "react-scripts start",
-        "build": "react-scripts build && cp build/index.html build/404.html",
+        "start": "NODE_OPTIONS=--openssl-legacy-provider react-scripts start",
+        "build": "NODE_OPTIONS=--openssl-legacy-provider react-scripts build && cp build/index.html build/404.html",
         "eject": "react-scripts eject",
         "format": "prettier --write '**/*.{js,jsx,ts,tsx,md}'",
         "lint": "eslint --fix '**/*.{js,jsx,ts,tsx}'",
@@ -119,5 +119,9 @@
             "eslint-disable-next-line jsx-a11y/click-events-have-key-events": 0,
             "react-hooks/exhaustive-deps": 0
         }
+    },
+    "volta": {
+        "node": "20.19.0",
+        "yarn": "1.22.22"
     }
 }
