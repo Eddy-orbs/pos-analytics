@@ -4,9 +4,7 @@ import { types } from '../types/types';
 
 const initialState: MainState = {
     chain: CHAINS.ETHEREUM,
-    web3: undefined,
-    blockRef: undefined
-
+    web3: undefined
 };
 
 export const mainReducer = (state = initialState, { payload, type }: any): MainState => {
@@ -16,8 +14,7 @@ export const mainReducer = (state = initialState, { payload, type }: any): MainS
                 return {
                     ...state,
                     web3: payload.web3,
-                    chain: payload.chain,
-                    blockRef: payload.blockRef
+                    chain: payload.chain
                 };
         default:
             return state;

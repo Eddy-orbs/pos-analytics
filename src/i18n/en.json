@@ -20,7 +20,9 @@
         "claimed": "claimed",
         "currentBalance": "Current balance",
         "alreadyClaimed": "Already claimed",
-        "totalClaimed": "Total"
+        "totalClaimed": "Total",
+        "retry": "Retry",
+        "loadFailed": "Unable to load data"
     },
     "navigation": {
         "orbsUniverse": "orbs universe",
@@ -35,6 +37,7 @@
         "legend": "legend",
         "totalDelegation": "Total Guardian stake",
         "ownDelegation": "Guardian self stake",
+        "delegatedStake": "Delegated stake",
         "delegators": "Delegators",
         "inputPlaceholder": "Name or address",
         "delegatorsCount": "Delegators count",

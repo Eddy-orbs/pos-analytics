@@ -1,7 +1,12 @@
-import React from 'react';
-import { GuardianDelegator } from '@orbs-network/pos-analytics-lib';
-import { useSelector } from 'react-redux';
+import React, { useEffect } from 'react';
+import { GuardianDelegatorPageItem } from '@orbs-network/pos-analytics-lib';
+import { useDispatch, useSelector } from 'react-redux';
 import { AppState } from 'redux/types/types';
+import {
+  cancelGuardianDelegatorsRequest,
+  getGuardianDelegatorsKey,
+  loadGuardianDelegatorsPage,
+} from 'redux/actions/guardians-actions';
 import { NoData } from 'components/no-data/no-data';
 import './guardian-delegators.scss';
 import { GuardianDelegatorElement } from './components/guardian-delegator/guardian-delegator';
@@ -12,42 +17,96 @@ import { LoaderType } from 'global/enums';
 import { isMobile } from 'react-device-detect';
 
 export const GuardianDelegators = () => {
-  const { selectedGuardian, guardianIsLoading } = useSelector(
+  const dispatch = useDispatch();
+  const {
+    guardianCurrent,
+    guardianIsLoading,
+    delegatorsByKey,
+  } = useSelector(
     (state: AppState) => state.guardians
   );
+  const { chain, web3 } = useSelector((state: AppState) => state.main);
   const { t } = useTranslation();
+  const address = guardianCurrent && guardianCurrent.address;
+  const key = address ? getGuardianDelegatorsKey(chain, address) : undefined;
+  const entry = key ? delegatorsByKey[key] : undefined;
+
+  useEffect(() => {
+    if (!address || !key || !web3) return undefined;
+    dispatch(loadGuardianDelegatorsPage(address, web3));
+    return () => {
+      dispatch(cancelGuardianDelegatorsRequest(key));
+    };
+  }, [address, chain, dispatch, key, web3]);
+
   const titles = [
     isMobile ? t('main.address') : t('guardians.delegatorsAddress'),
     t('guardians.stake'),
     t('guardians.nonStakedBalance'),
   ];
 
-  const noData = !guardianIsLoading && !selectedGuardian;
+  const retry = () => {
+    if (!address || !web3) return;
+    const cursor = entry && entry.items.length > 0 ? entry.nextCursor : undefined;
+    dispatch(loadGuardianDelegatorsPage(address, web3, cursor));
+  };
 
-  return noData ? (
+  const loadMore = () => {
+    if (!address || !web3 || !entry || !entry.nextCursor) return;
+    dispatch(loadGuardianDelegatorsPage(address, web3, entry.nextCursor));
+  };
+
+  const currentNotFound = !guardianIsLoading && !guardianCurrent;
+  const initialLoading = guardianIsLoading || (!!address && (!entry || (entry.status === 'loading' && entry.items.length === 0)));
+  const empty = !!entry && entry.status === 'loaded' && entry.items.length === 0;
+  const initialError = !!entry && entry.status === 'error' && entry.items.length === 0;
+
+  return currentNotFound ? (
     <NoData />
   ) : (
     <div className="guardian-delegators-list">
       <LoadingComponent
-        isLoading={guardianIsLoading}
+        isLoading={initialLoading}
         listElementAmount={5}
         loaderType={LoaderType.LIST}
       >
-        <ListMaterial
-          titles={titles}
-          titleClassName="list-titles"
-          listHeaderBg="#F7F7F7"
-        >
-          {selectedGuardian &&
-            selectedGuardian.delegators.map((delegator: GuardianDelegator) => {
-              return (
+        {initialError ? (
+          <div className="guardian-delegators-feedback">
+            <NoData customMessage={entry && entry.error} />
+            <button type="button" onClick={retry}>Retry</button>
+          </div>
+        ) : empty ? (
+          <NoData />
+        ) : entry ? (
+          <>
+            <ListMaterial
+              titles={titles}
+              titleClassName="list-titles"
+              listHeaderBg="#F7F7F7"
+            >
+              {entry.items.map((delegator: GuardianDelegatorPageItem) => (
                 <GuardianDelegatorElement
                   delegator={delegator}
                   key={delegator.address}
                 />
-              );
-            })}
-        </ListMaterial>
+              ))}
+            </ListMaterial>
+            {entry.status === 'error' ? (
+              <div className="guardian-delegators-feedback guardian-delegators-feedback-inline">
+                <p>{entry.error}</p>
+                <button type="button" onClick={retry}>Retry</button>
+              </div>
+            ) : null}
+            {entry.nextCursor && entry.status !== 'error' ? (
+              <div className="guardian-delegators-pagination">
+                <button type="button" onClick={loadMore} disabled={entry.status === 'loading'}>
+                  {entry.status === 'loading' ? 'Loading…' : 'Load more'}
+                </button>
+                <p>{`${entry.items.length} / ${entry.total}`}</p>
+              </div>
+            ) : null}
+          </>
+        ) : null}
       </LoadingComponent>
     </div>
   );

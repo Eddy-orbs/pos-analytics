@@ -3,7 +3,7 @@ import { Line } from 'react-chartjs-2';
 import { useTranslation } from 'react-i18next';
 import { ChartColors } from 'global/enums';
 import { ChartData } from 'global/types';
-import { generateDatasets, getGuardiansLineChartSettings } from 'utils/chart';
+import { generateDatasets, getLineChartBaseSettings } from 'utils/chart';
     import {isMobile} from 'react-device-detect'
 interface StateProps {
     chartData: ChartData;
@@ -17,12 +17,12 @@ export const Chart = ({ chartData }: StateProps) => {
     };
 
 
-    const options = getGuardiansLineChartSettings(chartData.unit,ref, t, isMobile);
+    const options = getLineChartBaseSettings(chartData.unit,ref, t, isMobile);
     return options ? (
         <div className="line-chart">
             <div className="line-chart-text line-chart-text-left">
                 <p className="one-line" style={{ color: ChartColors.DELEGATORS }}>
-                    {t('guardians.delegators')}
+                    {t('guardians.delegatedStake', 'Delegated stake')}
                 </p>
             </div>
             <Line data={data} options={options} ref = {ref} />

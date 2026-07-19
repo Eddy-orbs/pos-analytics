@@ -10,6 +10,21 @@
         top: 30px;
     }
 
+    &-feedback {
+        align-items: center;
+        color: #c0392b;
+        gap: 12px;
+        height: 100%;
+        justify-content: center;
+
+        button {
+            background: #ff7a45;
+            border-radius: 4px;
+            color: #fff;
+            padding: 9px 18px;
+        }
+    }
+
     .line-chart {
         height: calc(100% - 70px);
         width: 100%;
@@ -22,6 +37,21 @@
         h4 {
             font-weight: 600;
             font-size: 21px;
+        }
+        .delegator-chart-series {
+            margin-top: 10px;
+            gap: 7px;
+            span {
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+            }
+            p {
+                margin-right: 12px;
+                color: #666666;
+                font-size: 12px;
+                text-transform: none;
+            }
         }
     }
 }
@@ -45,6 +75,9 @@
                 font-size: 12px;
                 text-transform: uppercase;
                 margin-bottom: 20px;
+            }
+            .delegator-chart-series {
+                justify-content: center;
             }
         }
     }

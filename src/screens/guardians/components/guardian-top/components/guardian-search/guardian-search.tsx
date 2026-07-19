@@ -11,7 +11,6 @@ import { AppState } from 'redux/types/types';
 import { routes } from 'routes/routes';
 import {
   getGuardianName,
-  checkIfLoadDelegator,
   getGuardianByAddress,
 } from 'utils/guardians';
 import './guardian-search.scss';
@@ -23,12 +22,10 @@ interface StateProps {
 }
 
 export const GuardianSearch = ({ address, section }: StateProps) => {
-  const { guardians, selectedGuardian } = useSelector(
+  const { guardians, guardianCurrent, guardianCurrentError } = useSelector(
     (state: AppState) => state.guardians
   );
-  const { web3, blockRef } = useSelector(
-    (state: AppState) => state.main
-  );
+  const { web3, chain } = useSelector((state: AppState) => state.main);
 
   const dispatch = useDispatch();
   const history: any = useHistory();
@@ -38,13 +35,17 @@ export const GuardianSearch = ({ address, section }: StateProps) => {
   const [showResults, setShowResults] = useState<boolean>(false);
 
   useEffect(() => {
-    searchGuardianByAddress(address);
-    setGuardianNameAsValue(address || selectedGuardian?.address);
-  }, []);
+    if (!web3) return;
+    if (!address) {
+      dispatch(setGuardianLoading(false));
+      return;
+    }
+    dispatch(getGuardianAction(address, web3));
+  }, [address, chain, web3]);
 
   useEffect(() => {
-    setGuardianNameAsValue(address);
-  }, [guardians && guardians.length]);
+    setGuardianNameAsValue(address || guardianCurrent?.address);
+  }, [address, guardianCurrent && guardianCurrent.address, guardians && guardians.length]);
 
   useEffect(() => {
     if (hasClickedOutside) {
@@ -56,20 +57,12 @@ export const GuardianSearch = ({ address, section }: StateProps) => {
   }, [hasClickedOutside]);
 
   const searchGuardianByAddress = (addressParam?: string) => {
-    if (!addressParam) {
-      return dispatch(setGuardianLoading(false));
-    }
-    const loadGuardian = checkIfLoadDelegator(
-      addressParam,
-      selectedGuardian?.address
-    );
-    if (!loadGuardian) return null;
+    if (!addressParam) return;
     history.push(
       routes.guardians.main
         .replace(':section?', section)
-        .replace(':address', addressParam)
+        .replace(':address?', addressParam)
     );
-    dispatch(getGuardianAction(addressParam, web3, blockRef!!));
   };
 
   const selectGuardian = (guardianAddress: string) => {
@@ -163,6 +156,14 @@ export const GuardianSearch = ({ address, section }: StateProps) => {
           />
         )}
       </section>
+      {guardianCurrentError && address ? (
+        <div className="search-input-load-error">
+          <p>{guardianCurrentError}</p>
+          <button type="button" onClick={() => web3 && dispatch(getGuardianAction(address, web3))}>
+            {t('main.retry')}
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 };

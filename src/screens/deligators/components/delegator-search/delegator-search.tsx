@@ -6,7 +6,6 @@ import { RouteParams } from 'global/types';
 import { findDelegatorAction, setDelegatorLoading } from 'redux/actions/actions';
 import { AppState } from 'redux/types/types';
 import { routes } from 'routes/routes';
-import { checkIfLoadDeligator } from 'utils/delegators';
 import { useClickOutside } from 'react-click-outside-hook';
 import LoupeImg from 'assets/images/loupe.svg';
 import { isMobile } from 'react-device-detect';
@@ -14,8 +13,8 @@ import { isMobile } from 'react-device-detect';
 import './delegator-search.scss';
 
 export const DelegatorSearch = () => {
-    const { selectedDelegator, delegatorNotFound } = useSelector((state: AppState) => state.delegator);
-    const { web3, blockRef } = useSelector((state: AppState) => state.main);
+    const { delegatorNotFound, delegatorCurrentError } = useSelector((state: AppState) => state.delegator);
+    const { web3, chain } = useSelector((state: AppState) => state.main);
     const [ref, hasClickedOutside] = useClickOutside();
     const [inputValue, setInputValue] = useState<string>('');
     const dispatch = useDispatch();
@@ -25,8 +24,7 @@ export const DelegatorSearch = () => {
 
     const pushAddressAndFindDelegator = (address: string) => {
         const { section } = params;
-        history.push(routes.delegators.main.replace(':section?', section).replace(':address', address));
-        findDelegator(address);
+        history.push(routes.delegators.main.replace(':section?', section).replace(':address?', address));
     };
     useEffect(() => {
         const { address } = params;
@@ -42,24 +40,14 @@ export const DelegatorSearch = () => {
         setInputValue(address);
     }, [params.address]);
 
-    const findDelegator = (address: string) => {
-        const LoadDelegator = checkIfLoadDeligator(address, selectedDelegator);
-        if (LoadDelegator) {
-            dispatch(findDelegatorAction(address, web3, blockRef!!));
-        }
-    };
-
     useEffect(() => {
-        handleOnLoad();
-    }, []);
-
-    const handleOnLoad = () => {
         const { address } = params;
         if (!address) {
-            return dispatch(setDelegatorLoading(false));
+            dispatch(setDelegatorLoading(false));
+            return;
         }
-        return findDelegator(address);
-    };
+        if (web3) dispatch(findDelegatorAction(address, web3));
+    }, [params.address, chain, web3]);
 
     const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
         const value = e.clipboardData.getData('Text');
@@ -93,6 +81,17 @@ export const DelegatorSearch = () => {
                 />
             </section>
             {delegatorNotFound && <p className="search-input-not-found">{t('delegators.notFound')}</p>}
+            {delegatorCurrentError && params.address ? (
+                <div className="search-input-load-error">
+                    <p>{delegatorCurrentError}</p>
+                    <button
+                        type="button"
+                        onClick={() => web3 && dispatch(findDelegatorAction(params.address as string, web3))}
+                    >
+                        {t('main.retry')}
+                    </button>
+                </div>
+            ) : null}
         </div>
     );
 };

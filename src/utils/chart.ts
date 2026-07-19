@@ -4,7 +4,6 @@ import { ChartData, ChartDataset, ChartDatasetObject } from '../global/types';
 import { formatNumber } from './number';
 import moment from 'moment';
 import { TIME_UNIT_FORMAT } from '../global/variables';
-import { getMinDateByUnit } from './delegators';
 
 export const getGuardiansLineChartSettings = (unit: ChartUnit, ref: any, t: TFunction, isMobile: boolean) => {
     const settings = getLineChartBaseSettings(unit, ref, t, isMobile);
@@ -110,8 +109,6 @@ export const getLineChartBaseSettings = (unit: ChartUnit, ref: any, t: TFunction
                             const date = values[index].value;
                             return ['|', '', value, moment(date).format('YYYY')];
                         },
-                        min: getMinDateByUnit(unit),
-                      
                         autoSkip: true,
                         padding: -10,
                         fontSize: isMobile ? 9 : 12,

@@ -97,6 +97,20 @@ body {
     font-weight: 500;
   }
 
+  &-load-error {
+    align-items: center;
+    color: #c0392b;
+    display: flex;
+    font-size: 13px;
+    gap: 10px;
+    margin-top: 10px;
+
+    button {
+      color: #ff6f3c;
+      font-weight: 600;
+    }
+  }
+
   &-title {
     font-size: 21px;
     font-weight: 600;

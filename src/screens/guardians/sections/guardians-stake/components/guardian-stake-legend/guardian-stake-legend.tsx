@@ -13,7 +13,7 @@ interface Legend {
 }
 
 export const GuardianStakeLegend = () => {
-    const { selectedGuardian, guardianIsLoading, guardianChartData } = useSelector(
+    const { guardianCurrent, guardianIsLoading } = useSelector(
         (state: AppState) => state.guardians
     );
     const {t} = useTranslation()
@@ -27,17 +27,17 @@ export const GuardianStakeLegend = () => {
             background: ChartColors.SELF_STAKE
         },
         {
-            name: `${t('guardians.delegatorsCount')}`,
+            name: `${t('guardians.delegatedStake', 'Delegated stake')}`,
             background: ChartColors.DELEGATORS
         }
     ];
-    const noData = !guardianIsLoading && !selectedGuardian
+    const noData = !guardianIsLoading && !guardianCurrent
     return (
         noData ? null  : <section className="guardian-stake-legend">
                 {legends.map((legend: Legend) => {
                     const { name, background } = legend;
                     return (
-                       <LoadingComponent key = {name} isLoading = {!selectedGuardian} loaderType ={LoaderType.TEXT} >
+                       <LoadingComponent key = {name} isLoading = {!guardianCurrent} loaderType ={LoaderType.TEXT} >
                             <div  className='flex-start-center'>
                             <figure
                                 style={{
@@ -51,4 +51,3 @@ export const GuardianStakeLegend = () => {
             </section>
     )
 }
-

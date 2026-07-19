@@ -4,6 +4,7 @@ import React, { useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'redux/types/types';
 import { CHAINS, IChain } from 'types';
+import { getRouterBasePath } from 'utils/router';
 import './style.scss';
 
 interface ExtendedChain extends IChain {
@@ -41,7 +42,7 @@ function ChainSelector() {
                     {chainsList.map((c: ExtendedChain) => {
                         return (
                             <li key = {c.key}>
-                                <a href={`/${c.key}`}>
+                                <a href={getRouterBasePath(process.env.PUBLIC_URL, c.key)}>
                                     <img src={c.logo} />
                                     {c.name}
                                 </a>

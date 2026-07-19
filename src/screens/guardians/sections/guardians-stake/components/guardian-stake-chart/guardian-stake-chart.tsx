@@ -4,40 +4,82 @@ import { useDispatch, useSelector } from 'react-redux';
 import { TimeRangeSelector } from 'components/date-format-picker/time-range-selector';
 import { LoadingComponent } from 'components/loading-component/loading-component';
 import { ChartUnit, LoaderType } from 'global/enums';
-import { setGuardianChartData } from 'redux/actions/actions';
+import { cancelGuardianHistoryRequest, loadGuardianHistory } from 'redux/actions/actions';
 import { AppState } from 'redux/types/types';
-import { generateGuardiansChartData } from 'utils/guardians';
+import { buildGuardianDetailChartData } from 'utils/detail-chart-data';
 import { Chart } from './chart';
 import './guardian-stake-chart.scss';
 
 export const GuardianStakeChart = () => {
     const dispatch = useDispatch();
-    const { selectedGuardian, guardianIsLoading, guardianChartData } = useSelector(
+    const {
+        guardianCurrent,
+        guardianIsLoading,
+        activeGuardianKey,
+        activeGuardianHistoryUnit,
+        historyByKey
+    } = useSelector(
         (state: AppState) => state.guardians
     );
+    const { web3 } = useSelector((state: AppState) => state.main);
     const { t } = useTranslation();
+
+    const historyEntry = activeGuardianKey
+        ? historyByKey[`${activeGuardianKey}:${activeGuardianHistoryUnit}`]
+        : undefined;
+    const history = historyEntry && historyEntry.status === 'loaded' ? historyEntry.data : undefined;
+    const guardianChartData = guardianCurrent && history
+        ? buildGuardianDetailChartData(history, guardianCurrent, activeGuardianHistoryUnit)
+        : undefined;
+    const guardianAddress = guardianCurrent && guardianCurrent.address;
+
     useEffect(() => {
-        if (!guardianChartData) {
-            selectChartData(ChartUnit.WEEK);
-        }
-    }, [selectedGuardian && selectedGuardian.address]);
+        if (!guardianAddress || !web3) return;
+        dispatch(loadGuardianHistory(guardianAddress, web3, activeGuardianHistoryUnit));
+    }, [activeGuardianHistoryUnit, dispatch, guardianAddress, web3]);
+
+    useEffect(() => {
+        return () => {
+            dispatch(cancelGuardianHistoryRequest());
+        };
+    }, [dispatch]);
 
     const selectChartData = (unit: ChartUnit) => {
-        const data = generateGuardiansChartData(unit, selectedGuardian);
-        dispatch(setGuardianChartData(data));
+        if (!guardianCurrent || !web3 || (unit !== ChartUnit.WEEK && unit !== ChartUnit.MONTH)) return;
+        dispatch(loadGuardianHistory(guardianCurrent.address, web3, unit));
     };
-    const noData = !guardianIsLoading && !selectedGuardian;
+    const noData = !guardianIsLoading && !guardianCurrent;
+    const historyLoading = !!guardianCurrent && (
+        !historyEntry || historyEntry.status === 'idle' || historyEntry.status === 'loading'
+    );
+    const historyError = historyEntry && historyEntry.status === 'error'
+        ? historyEntry.error || t('main.loadFailed')
+        : undefined;
     return noData ? null : (
         <div className="guardian-stake-chart">
-            <LoadingComponent loaderType={LoaderType.BIG} isLoading={!selectedGuardian}>
+            <LoadingComponent
+                loaderType={LoaderType.BIG}
+                isLoading={guardianIsLoading || historyLoading}
+            >
                 {guardianChartData ? (
                     <>
                         <header>
                             <h4>{t('delegators.stakeChangeOverTime')}</h4>
-                            <TimeRangeSelector selected={guardianChartData.unit} selectCallBack={selectChartData} />
+                            <TimeRangeSelector
+                                selected={guardianChartData.unit}
+                                selectCallBack={selectChartData}
+                                unitsToHide={[ChartUnit.DAY]}
+                            />
                         </header>
                         <Chart chartData={guardianChartData} />
                     </>
+                ) : historyError ? (
+                    <div className="guardian-stake-chart-feedback flex-column">
+                        <p>{historyError}</p>
+                        <button type="button" onClick={() => selectChartData(activeGuardianHistoryUnit)}>
+                            {t('main.retry')}
+                        </button>
+                    </div>
                 ) : null}
             </LoadingComponent>
         </div>

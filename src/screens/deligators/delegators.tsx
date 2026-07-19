@@ -1,10 +1,8 @@
 import React from 'react';
 import { routes } from '../../routes/routes';
-import { Route, useParams } from 'react-router-dom';
-import { DeligatorsActions } from './sections/delegators-actions/delegators-actions';
+import { Redirect, Route, useParams } from 'react-router-dom';
 import { DelegatorsStake } from './sections/delegators-stake/delegators-stake';
 import { DelegatorSearch } from './components/delegator-search/delegator-search';
-import { DelegatorReward } from './sections/delegators-reward/delegator-reward';
 import { RouteParams } from '../../global/types';
 import { generateDelegatorsRoutes } from '../../utils/delegators';
 import { useTranslation } from 'react-i18next';
@@ -32,11 +30,11 @@ const DelegatorsComponent = () => {
           />
           <Route
             path={routes.delegators.rewards}
-            render={() => <DelegatorReward />}
+            render={() => <Redirect to={routes.delegators.stake.replace(':address?', address || '')} />}
           />
           <Route
             path={routes.delegators.actions}
-            render={() => <DeligatorsActions />}
+            render={() => <Redirect to={routes.delegators.stake.replace(':address?', address || '')} />}
           />
           <CheckDelegatorAddress addressParam={address} />
         </div>
