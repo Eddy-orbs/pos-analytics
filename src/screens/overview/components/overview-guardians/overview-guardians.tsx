@@ -6,7 +6,7 @@ import { routes } from 'routes/routes';
 import { getGuardianColor } from 'utils/overview/overview';
 import CopyImg from 'assets/images/copy.svg';
 import { LoadingComponent } from 'components/loading-component/loading-component';
-import { LoaderType, OverviewChartType } from 'global/enums';
+import { LoaderType } from 'global/enums';
 import { useTranslation } from 'react-i18next';
 import { PosOverview, PosOverviewData } from '@orbs-network/pos-analytics-lib';
 import './overview-guardians.scss';

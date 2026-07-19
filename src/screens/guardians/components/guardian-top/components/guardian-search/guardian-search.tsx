@@ -14,7 +14,6 @@ import {
   getGuardianByAddress,
 } from 'utils/guardians';
 import './guardian-search.scss';
-import { isMobile } from 'react-device-detect';
 
 interface StateProps {
   address?: string;
@@ -125,11 +124,7 @@ export const GuardianSearch = ({ address, section }: StateProps) => {
   };
 
   return (
-    <div
-      className={`guardian-search search-input ${
-        isMobile ? '' : 'flex-column'
-      }`}
-    >
+    <div className="guardian-search search-input flex-column">
       <p className="search-input-title">{t('guardians.selectGuardian')}</p>
       <section className="search-input-box" ref={ref}>
         {generateBtn()}

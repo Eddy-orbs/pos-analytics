@@ -3,7 +3,7 @@
   .screen-section {
     margin-top: 60px;
     &-container {
-      height: calc(100vh - 288px);
+      min-height: max(480px, calc(100vh - 288px));
     }
   }
 }
@@ -28,7 +28,19 @@
   }
 }
 
-@media (max-width: 576px) {
+@media (min-width: 768px) and (max-width: 1199px) {
+  .guardians {
+    .screen-section {
+      margin-top: 32px;
+
+      &-container {
+        min-height: 640px;
+      }
+    }
+  }
+}
+
+@media (max-width: 767px) {
   .guardians {
     background: #fff;
     .screen-section {
@@ -37,6 +49,7 @@
         padding: 0px;
        
         height: initial;
+        min-height: 420px;
       }
     }
   }

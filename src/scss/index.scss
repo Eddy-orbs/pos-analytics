@@ -6,9 +6,10 @@
 body {
   background: #fafafa;
   font-family: 'Montserrat';
-  overflow: hidden;
-  padding-top: 15px;
-  padding-left: 15px;
+  min-width: 320px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 15px;
 }
 
 .flex-start {
@@ -51,7 +52,9 @@ body {
 }
 
 .screen {
-  width: calc(100% - 233px);
+  min-width: 0;
+  width: 100%;
+  padding-bottom: 40px;
   padding-left: 30px;
   padding-right: 30px;
   &-section {
@@ -68,6 +71,10 @@ body {
 
 .app {
   align-items: flex-start;
+  display: grid;
+  grid-template-columns: 233px minmax(0, 1fr);
+  min-height: calc(100vh - 30px);
+  width: 100%;
 }
 
 .text-overflow {
@@ -220,10 +227,37 @@ input::placeholder {
   }
 }
 
-@media (max-width: 576px) {
+@media (min-width: 768px) and (max-width: 1199px) {
+  body {
+    padding: 12px;
+  }
+
+  .app {
+    grid-template-columns: 190px minmax(0, 1fr);
+    min-height: calc(100vh - 24px);
+  }
+
+  .screen {
+    padding-left: 20px;
+    padding-right: 8px;
+  }
+
+  .screen-section-container {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 767px) {
   body {
     padding: 0;
-    overflow: initial;
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    .app {
+      display: block;
+      min-height: 100vh;
+    }
+
     .screen {
       width: 100%;
       padding: 0;
@@ -231,7 +265,7 @@ input::placeholder {
   }
 }
 
-@media (max-width: 800px) {
+@media (max-width: 767px) {
   .search {
     p {
       text-align: center;

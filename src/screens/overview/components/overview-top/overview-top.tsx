@@ -10,7 +10,7 @@ import { LoaderType } from 'global/enums';
 import { OVERVIEW_STATUS_LINK } from 'global/variables';
 import StellarImg from 'assets/images/stellar.svg';
 import './overview-top.scss';
-import { isMobile } from 'react-device-detect';
+import { useIsMobileViewport } from 'hooks/useViewport';
 
 interface StateProps {
   data?: number;
@@ -31,9 +31,10 @@ const OverviewTopSection = ({
   link,
   noData,
 }: StateProps) => {
+  const isMobile = useIsMobileViewport();
   return (
     <section className="overview-top-section flex-column">
-      <div className={`${isMobile ? '' : 'flex-between'}`}>
+      <div className="overview-top-section-summary">
         <span className="flex-start-center img-text">
           <img src={imgSrc} alt="" />
           <span className="flex-column">
@@ -50,14 +51,14 @@ const OverviewTopSection = ({
           </span>
         </span>
         {!noData && (
-          <LoadingComponent loaderType={LoaderType.TEXT} isLoading={!data}>
+          <LoadingComponent loaderType={LoaderType.TEXT} isLoading={data === undefined}>
             <h4 className="value">{convertToString(data)}</h4>
           </LoadingComponent>
         )}
       </div>
       <button type="button" className="flex-center btn-action">
         {link ? (
-          <a className="flex-center" href={link} target="_blank">
+          <a className="flex-center" href={link} target="_blank" rel="noopener noreferrer">
             {btnText}
           </a>
         ) : (
@@ -79,7 +80,7 @@ const OverviewTopComponent = () => {
       <OverviewTopSection
         textTop={t('overview.total')}
         textBottom={t('overview.stake')}
-        data={overviewData?.total_stake || 0}
+        data={overviewData?.total_stake}
         imgSrc={TotalStakeImg}
         btnText={t('overview.stakeYourTokens')}
         link="https://staking.orbs.network"
@@ -88,7 +89,7 @@ const OverviewTopComponent = () => {
       <OverviewTopSection
         textTop={t('overview.guardians')}
         textBottom={t('overview.candidates')}
-        data={overviewData ? overviewData.n_guardians : 0}
+        data={overviewData?.n_guardians}
         imgSrc={GuardiansImg}
         btnText={t('overview.guardianList')}
         link="https://staking.orbs.network"

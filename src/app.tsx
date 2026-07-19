@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import { isMobile } from 'react-device-detect';
 import { useDispatch, useSelector } from 'react-redux';
 import { getGuardiansAction} from './redux/actions/actions';
 import { RootRouter } from './routes';
@@ -13,12 +12,12 @@ const App = () => {
 
     useEffect(() => {
         dispatch(getGuardiansAction(chain));
-    }, []);
+    }, [chain, dispatch]);
 
    
 
     return (
-        <div className={`app ${isMobile ? '' : 'flex-between'}`}>
+        <div className="app">
             <RootRouter chain={chain} />
         </div>
     );

@@ -1,10 +1,11 @@
 @import '../../scss/colors/colors.scss';
 
 .navigation {
-  width: 233px;
+  width: 100%;
   height: calc(100vh - 30px);
   background: $navigation-menu;
-  position: relative;
+  position: sticky;
+  top: 0;
   box-shadow: 0px 5px 10px #00000029;
   border-radius: 13px;
   overflow: hidden;
@@ -103,7 +104,36 @@
   }
 }
 
-@media (max-width: 576px) {
+@media (min-width: 768px) and (max-width: 1199px) {
+  .navigation {
+    height: calc(100vh - 24px);
+    padding-top: 22px;
+
+    &-logo {
+      height: 58px;
+      margin-bottom: 12px;
+      width: 60px;
+    }
+
+    &-list-item {
+      height: 76px;
+
+      &-link {
+        img {
+          height: 22px;
+          margin-bottom: 7px;
+          width: 22px;
+        }
+
+        p {
+          font-size: 14px;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 767px) {
   .navigation-mobile {
     width: 100%;
     background: #1c1c1c;
@@ -151,6 +181,7 @@
     padding: 0;
     z-index: 100;
     width: 275px;
+    max-width: calc(100vw - 32px);
     h4,
     h5 {
       display: none;
@@ -160,6 +191,7 @@
     }
 
     .navigation {
+      position: relative;
       border-radius: 0;
       border-bottom-right-radius: 13px;
       height: calc(100vh - 77px);

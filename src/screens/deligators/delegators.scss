@@ -7,8 +7,7 @@
     margin-top: 60px;
 
     &-container {
-      height: 100%;
-      height: calc(100vh - 280px);
+      min-height: max(480px, calc(100vh - 280px));
     }
   }
 
@@ -17,12 +16,28 @@
     top: 160px;
   }
   .search-input-box {
-    width: 500px;
+    max-width: 500px;
+    width: min(500px, 100%);
   }
 }
 
-@media (max-width: 576px) {
+@media (min-width: 768px) and (max-width: 1199px) {
   .delegators {
+    padding-top: 32px;
+
+    .screen-section {
+      margin-top: 32px;
+
+      &-container {
+        min-height: 640px;
+      }
+    }
+  }
+}
+
+@media (max-width: 767px) {
+  .delegators {
+    padding-top: 0;
     .delegators-top {
       height: auto;
       padding: 20px;
@@ -41,6 +56,7 @@
       margin-top: 20px;
       .screen-section-container {
         height: initial;
+        min-height: 420px;
         padding: 0px;
       }
     }

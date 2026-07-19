@@ -1,7 +1,8 @@
 .section-menu {
   height: 40px;
-  overflow-x: hidden;
-  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+  width: max-content;
   &-element {
     background: white;
     width: 158px;
@@ -29,8 +30,9 @@
   }
 }
 
-@media (max-width: 576px) {
+@media (max-width: 767px) {
   .section-menu {
+    justify-content: center;
     width: 100%;
     padding-top: 20px;
     background: #fff;
@@ -39,7 +41,11 @@
       background-color: none;
       box-shadow: none;
       height: 100%;
+      margin-right: 0;
+      min-width: 0;
       padding-bottom: 7px;
+      width: auto;
+      flex: 1 1 0;
       a {
         p {
           font-size: 14px;

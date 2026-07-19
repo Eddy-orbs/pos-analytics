@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'redux/types/types';
-import { Redirect, Route, useParams } from 'react-router-dom';
+import { Redirect, Route } from 'react-router-dom';
 import { routes } from 'routes/routes';
 
 interface StateProps {

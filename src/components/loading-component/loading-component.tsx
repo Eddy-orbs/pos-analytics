@@ -1,4 +1,4 @@
-import React, { Children } from 'react';
+import React from 'react';
 import { LoaderType } from '../../global/enums';
 import { BigLoader } from '../loaders/big-loader';
 import { ListLoader } from '../loaders/list-loader';

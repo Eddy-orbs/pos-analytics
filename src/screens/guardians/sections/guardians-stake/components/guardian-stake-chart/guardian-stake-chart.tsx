@@ -2,8 +2,9 @@ import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { TimeRangeSelector } from 'components/date-format-picker/time-range-selector';
-import { LoadingComponent } from 'components/loading-component/loading-component';
-import { ChartUnit, LoaderType } from 'global/enums';
+import { BigLoader } from 'components/loaders/big-loader';
+import { NoData } from 'components/no-data/no-data';
+import { ChartUnit } from 'global/enums';
 import { cancelGuardianHistoryRequest, loadGuardianHistory } from 'redux/actions/actions';
 import { AppState } from 'redux/types/types';
 import { buildGuardianDetailChartData } from 'utils/detail-chart-data';
@@ -57,22 +58,19 @@ export const GuardianStakeChart = () => {
         : undefined;
     return noData ? null : (
         <div className="guardian-stake-chart">
-            <LoadingComponent
-                loaderType={LoaderType.BIG}
-                isLoading={guardianIsLoading || historyLoading}
-            >
-                {guardianChartData ? (
-                    <>
-                        <header>
-                            <h4>{t('delegators.stakeChangeOverTime')}</h4>
-                            <TimeRangeSelector
-                                selected={guardianChartData.unit}
-                                selectCallBack={selectChartData}
-                                unitsToHide={[ChartUnit.DAY]}
-                            />
-                        </header>
-                        <Chart chartData={guardianChartData} />
-                    </>
+            <header>
+                <h4>{t('delegators.stakeChangeOverTime')}</h4>
+                <TimeRangeSelector
+                    selected={guardianChartData ? guardianChartData.unit : activeGuardianHistoryUnit}
+                    selectCallBack={selectChartData}
+                    unitsToHide={[ChartUnit.DAY]}
+                />
+            </header>
+            <div className="guardian-stake-chart-stage">
+                {guardianIsLoading || historyLoading ? (
+                    <BigLoader />
+                ) : guardianChartData ? (
+                    <Chart chartData={guardianChartData} />
                 ) : historyError ? (
                     <div className="guardian-stake-chart-feedback flex-column">
                         <p>{historyError}</p>
@@ -80,8 +78,10 @@ export const GuardianStakeChart = () => {
                             {t('main.retry')}
                         </button>
                     </div>
-                ) : null}
-            </LoadingComponent>
+                ) : (
+                    <NoData />
+                )}
+            </div>
         </div>
     );
 };

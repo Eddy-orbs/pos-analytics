@@ -1,9 +1,16 @@
 .guardian-top {
   background: white;
-  height: 154px;
+  min-height: 154px;
   box-shadow: 0px 5px 10px #0812261a;
   padding: 30px 20px 20px 20px;
   border-radius: 10px;
+
+  .component-wrapper {
+    flex-wrap: wrap;
+    gap: 24px;
+    min-width: 0;
+    width: 100%;
+  }
   &-mobile-toggle {
     display: none;
     width: 20px;
@@ -23,8 +30,19 @@
   }
 }
 
-@media (max-width: 576px) {
+@media (min-width: 768px) and (max-width: 1199px) {
   .guardian-top {
+    height: auto;
+
+    .component-wrapper {
+      align-items: flex-start;
+    }
+  }
+}
+
+@media (max-width: 767px) {
+  .guardian-top {
+    overflow: hidden;
     height: auto;
     padding: 20px;
     box-shadow: none;
@@ -33,6 +51,7 @@
       border-radius: 10px;
       box-shadow: 0px 0px 13px -1px rgba(0, 0, 0, 0.5);
       padding: 18px;
+      min-width: 0;
     }
     &-mobile-toggle {
       display: flex;

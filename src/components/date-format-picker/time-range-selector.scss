@@ -1,16 +1,18 @@
 .time-range-selector {
-  height: 27px;
+  gap: 10px;
+  height: auto;
+  min-height: 32px;
 
   button {
     text-transform: capitalize;
   }
   &-btn {
-    width: 79px;
-    height: 100%;
+    min-height: 32px;
+    width: 84px;
     box-shadow: 0px 5px 10px #a3abba33;
     border: 1px solid #c6c6c6;
     border-radius: 5px;
-    margin-left: 15px;
+    margin-left: 0;
     color: #8a94a4;
     font-size: 14px;
     font-weight: 500;
@@ -21,21 +23,24 @@
   }
 }
 
-@media (max-width: 576px) {
+@media (max-width: 767px) {
   .time-range-selector {
     align-items: center;
-    justify-content: flex-end;
-    padding-right: 30px;
+    justify-content: center;
+    padding: 0;
+    width: 100%;
+
     button {
-      border-radius: 50%;
-      width: auto;
-      height: auto;
-      padding: 9px;
+      border: 1px solid #d0d5dd;
+      border-radius: 6px;
+      flex: 1 1 0;
+      max-width: 110px;
+      min-width: 0;
+      padding: 8px 12px;
       text-align: center;
       font-weight: 600;
-      border: none;
       background: #fff;
-      box-shadow: 0px 0px 15px #a3abba6b;
+      box-shadow: 0px 3px 10px #a3abba33;
     }
   }
 }

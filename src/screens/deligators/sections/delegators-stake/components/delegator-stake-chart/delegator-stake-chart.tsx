@@ -2,8 +2,9 @@ import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { TimeRangeSelector } from 'components/date-format-picker/time-range-selector';
-import { LoadingComponent } from 'components/loading-component/loading-component';
-import { ChartColors, ChartUnit, LoaderType } from 'global/enums';
+import { BigLoader } from 'components/loaders/big-loader';
+import { NoData } from 'components/no-data/no-data';
+import { ChartColors, ChartUnit } from 'global/enums';
 import { cancelDelegatorHistoryRequest, loadDelegatorHistory } from 'redux/actions/actions';
 import { AppState } from 'redux/types/types';
 import { buildDelegatorDetailChartData } from 'utils/detail-chart-data';
@@ -59,32 +60,29 @@ export const DelegatorStakeChart = () => {
         : undefined;
     return (
         noData ? null : <div className="delegator-stake-chart">
-            <LoadingComponent
-                loaderType={LoaderType.BIG}
-                isLoading={delegatorIsLoading || historyLoading}
-            >
-                {delegatorChartData ? (
-                    <>
-                        <header className="flex-between">
-                            <div>
-                                <h4>{t('delegators.stakeChangeOverTime')}</h4>
-                                <div className="delegator-chart-series flex-start-center">
-                                    <span style={{ background: ChartColors.TOTAL_STAKE }} />
-                                    <p>{t('main.stake')}</p>
-                                    <span style={{ background: ChartColors.SELF_STAKE }} />
-                                    <p>{t('guardians.cooldown')}</p>
-                                </div>
-                            </div>
-                            <TimeRangeSelector
-                                selected={delegatorChartData.unit}
-                                selectCallBack={selectChartData}
-                                unitsToHide={[ChartUnit.DAY]}
-                            />
-                        </header>
-                        <div className="line-chart">
-                            <Chart chartData={delegatorChartData} />
-                        </div>
-                    </>
+            <header className="flex-between">
+                <div>
+                    <h4>{t('delegators.stakeChangeOverTime')}</h4>
+                    <div className="delegator-chart-series flex-start-center">
+                        <span style={{ background: ChartColors.TOTAL_STAKE }} />
+                        <p>{t('main.stake')}</p>
+                        <span style={{ background: ChartColors.SELF_STAKE }} />
+                        <p>{t('guardians.cooldown')}</p>
+                    </div>
+                </div>
+                <TimeRangeSelector
+                    selected={delegatorChartData ? delegatorChartData.unit : activeDelegatorHistoryUnit}
+                    selectCallBack={selectChartData}
+                    unitsToHide={[ChartUnit.DAY]}
+                />
+            </header>
+            <div className="delegator-stake-chart-stage">
+                {delegatorIsLoading || historyLoading ? (
+                    <BigLoader />
+                ) : delegatorChartData ? (
+                    <div className="line-chart">
+                        <Chart chartData={delegatorChartData} />
+                    </div>
                 ) : historyError ? (
                     <div className="delegator-stake-chart-feedback flex-column">
                         <p>{historyError}</p>
@@ -92,8 +90,10 @@ export const DelegatorStakeChart = () => {
                             {t('main.retry')}
                         </button>
                     </div>
-                ) : null}
-            </LoadingComponent>
+                ) : (
+                    <NoData />
+                )}
+            </div>
         </div>
     );
 };

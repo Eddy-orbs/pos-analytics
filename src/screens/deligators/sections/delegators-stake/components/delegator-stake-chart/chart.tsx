@@ -3,7 +3,7 @@ import { Line } from 'react-chartjs-2';
 import { useTranslation } from 'react-i18next';
 import { ChartData } from 'global/types';
 import { generateDatasets, getLineChartBaseSettings } from 'utils/chart';
-import {isMobile} from 'react-device-detect'
+import { useIsMobileViewport } from 'hooks/useViewport';
 
 interface StateProps {
     chartData: ChartData;
@@ -11,6 +11,7 @@ interface StateProps {
 
 export const Chart = ({ chartData }: StateProps) => {
     const ref = useRef<any>(null);
+    const isMobile = useIsMobileViewport();
     const {t} = useTranslation()
     const data = {
         datasets: generateDatasets(chartData)

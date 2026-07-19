@@ -4,13 +4,14 @@ import { useTranslation } from 'react-i18next';
 import { ChartColors } from 'global/enums';
 import { ChartData } from 'global/types';
 import { generateDatasets, getLineChartBaseSettings } from 'utils/chart';
-    import {isMobile} from 'react-device-detect'
+import { useIsMobileViewport } from 'hooks/useViewport';
 interface StateProps {
     chartData: ChartData;
 }
 
 export const Chart = ({ chartData }: StateProps) => {
- const ref = useRef<any>(null)
+    const ref = useRef<any>(null)
+    const isMobile = useIsMobileViewport();
     const { t } = useTranslation();
     const data = {
         datasets: generateDatasets(chartData)

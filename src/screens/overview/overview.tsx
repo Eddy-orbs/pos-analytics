@@ -11,11 +11,11 @@ import { AppState } from 'redux/types/types';
 import { getOverviewAction } from 'redux/actions/actions';
 import { LoadingComponent } from 'components/loading-component/loading-component';
 import { LoaderType } from 'global/enums';
+import { NoData } from 'components/no-data/no-data';
 import './overview.scss';
-import { isMobile } from 'react-device-detect';
 
 export const Overview = () => {
-  const { overviewData } = useSelector((state: AppState) => state.overview);
+  const { overviewData, overviewDataLoding } = useSelector((state: AppState) => state.overview);
   const { chain, web3 } = useSelector((state: AppState) => state.main);
   
   const dispatch = useDispatch();
@@ -23,7 +23,7 @@ export const Overview = () => {
     if (!overviewData) {
       dispatch(getOverviewAction(chain, web3));
     }
-  }, []);
+  }, [chain, dispatch, overviewData, web3]);
 
   return (
     <div className="overview screen">
@@ -32,27 +32,27 @@ export const Overview = () => {
         <OverviewSectionSelector />
         <div className="screen-section-container">
           <LoadingComponent
-            isLoading={!overviewData}
+            isLoading={overviewDataLoding}
             loaderType={LoaderType.BIG}
           >
-            <div
-              className={`overview-flex ${
-                isMobile ? 'flex-column' : 'flex-start-center'
-              }`}
-            >
-              <Route
-                path={routes.overview.stake}
-                render={() => <OverviewStake />}
-              />
-              <Route
-                path={routes.overview.weights}
-                render={() => <OverviewWeights />}
-              />
-              <Route exact path={routes.overview.default}>
-                <Redirect to={routes.overview.stake} />
-              </Route>
-              <OverviewStakeGuadians />
-            </div>
+            {overviewData ? (
+              <div className="overview-flex">
+                <Route
+                  path={routes.overview.stake}
+                  render={() => <OverviewStake />}
+                />
+                <Route
+                  path={routes.overview.weights}
+                  render={() => <OverviewWeights />}
+                />
+                <Route exact path={routes.overview.default}>
+                  <Redirect to={routes.overview.stake} />
+                </Route>
+                <OverviewStakeGuadians />
+              </div>
+            ) : (
+              <NoData />
+            )}
           </LoadingComponent>
         </div>
       </div>

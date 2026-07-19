@@ -9,11 +9,12 @@ import { getDelegatorRewardActions } from 'utils/delegators';
 import { LoadingComponent } from 'components/loading-component/loading-component';
 import { ListMaterial } from 'components/list/list-material';
 import { LoaderType } from 'global/enums';
-import { isMobile } from 'react-device-detect';
+import { useIsMobileViewport } from 'hooks/useViewport';
 
 import './delegator-rewards-actions.scss';
 
 export const DelegatorRewardsActions = () => {
+    const isMobile = useIsMobileViewport();
     const { selectedDelegator, delegatorIsLoading } = useSelector((state: AppState) => state.delegator);
     const { t } = useTranslation();
     const titles = [

@@ -1,5 +1,4 @@
 import React from 'react';
-import { isMobile } from 'react-device-detect';
 import { useTranslation } from 'react-i18next';
 import { ChartUnit } from '../../global/enums';
 import './time-range-selector.scss';
@@ -30,22 +29,12 @@ export const TimeRangeSelector = ({
     { name: t('main.weeks'), unit: ChartUnit.WEEK },
     { name: t('main.days'), unit: ChartUnit.DAY },
   ];
-  if (isMobile) {
-    // on mobile they want only the first letter
-    for (let i = 0; i < options.length; i++) {
-      options[i].name = options[i].name[0];
-    }
-  }
   const select = (option: Option) => {
     selectCallBack(option.unit);
   };
 
   return (
-    <div
-      className={`time-range-selector ${
-        isMobile ? 'd-flex' : 'flex-start-center'
-      }`}
-    >
+    <div className="time-range-selector flex-start-center" role="group" aria-label="Chart period">
       {filterUnits(options, unitsToHide).map(
         (option: Option, index: number) => {
           const className =
@@ -57,6 +46,8 @@ export const TimeRangeSelector = ({
               onClick={() => select(option)}
               className={className}
               key={index}
+              type="button"
+              aria-pressed={selected === option.unit}
             >
               {option.name}
             </button>

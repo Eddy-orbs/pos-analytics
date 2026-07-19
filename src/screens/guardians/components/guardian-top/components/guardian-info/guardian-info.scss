@@ -1,7 +1,9 @@
 @import 'scss/colors/colors.scss';
 
 .guardian-info {
-    width: fit-content;
+    flex: 1 1 420px;
+    min-width: 0;
+    width: auto;
     padding-left: 40px;
     align-items: flex-start;
     overflow: hidden;
@@ -53,13 +55,28 @@
     }
 }
 
-@media (max-width: 800px) {
+@media (min-width: 768px) and (max-width: 1199px) {
+    .guardian-info {
+        padding-left: 0;
+        width: 100%;
+    }
+}
+
+@media (max-width: 767px) {
     .guardian-info {
         flex-direction: column;
         width: 100%;
         padding: 0px;
         max-height: 500px;
         transition: 0.1s all;
+
+        &-container,
+        &-container:nth-child(1),
+        &-container:nth-child(2) {
+            max-width: 100%;
+            min-width: 0;
+            width: 100%;
+        }
         h5 {
             font-size: 15px;
         }

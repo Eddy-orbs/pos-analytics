@@ -15,6 +15,14 @@ const getFirstSlice = (slices: PosOverviewSlice[], date: Moment): PosOverviewSli
     return filteredSlices[slicesLength - 1];
 };
 
+export const getLatestOverviewDate = (overviewData?: PosOverview): Date | null => {
+    if (!overviewData || !overviewData.slices || overviewData.slices.length === 0) return null;
+    const latestSlice = overviewData.slices.reduce((latest, slice) => {
+        return slice.block_time > latest.block_time ? slice : latest;
+    });
+    return moment.unix(latestSlice.block_time).toDate();
+};
+
 export const getStakeChartData = (date: Moment, { slices }: PosOverview): null | PosOverviewData[] => {
     // eslint-disable-next-line @typescript-eslint/camelcase
     const selectedDateSlice = getFirstSlice(slices, date);

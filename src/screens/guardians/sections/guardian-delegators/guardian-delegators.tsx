@@ -11,10 +11,8 @@ import { NoData } from 'components/no-data/no-data';
 import './guardian-delegators.scss';
 import { GuardianDelegatorElement } from './components/guardian-delegator/guardian-delegator';
 import { useTranslation } from 'react-i18next';
-import { LoadingComponent } from 'components/loading-component/loading-component';
 import { ListMaterial } from 'components/list/list-material';
-import { LoaderType } from 'global/enums';
-import { isMobile } from 'react-device-detect';
+import { useIsMobileViewport } from 'hooks/useViewport';
 
 export const GuardianDelegators = () => {
   const dispatch = useDispatch();
@@ -27,6 +25,7 @@ export const GuardianDelegators = () => {
   );
   const { chain, web3 } = useSelector((state: AppState) => state.main);
   const { t } = useTranslation();
+  const isMobile = useIsMobileViewport();
   const address = guardianCurrent && guardianCurrent.address;
   const key = address ? getGuardianDelegatorsKey(chain, address) : undefined;
   const entry = key ? delegatorsByKey[key] : undefined;
@@ -65,49 +64,48 @@ export const GuardianDelegators = () => {
     <NoData />
   ) : (
     <div className="guardian-delegators-list">
-      <LoadingComponent
-        isLoading={initialLoading}
-        listElementAmount={5}
-        loaderType={LoaderType.LIST}
-      >
-        {initialError ? (
-          <div className="guardian-delegators-feedback">
-            <NoData customMessage={entry && entry.error} />
-            <button type="button" onClick={retry}>Retry</button>
-          </div>
-        ) : empty ? (
-          <NoData />
-        ) : entry ? (
-          <>
-            <ListMaterial
-              titles={titles}
-              titleClassName="list-titles"
-              listHeaderBg="#F7F7F7"
-            >
-              {entry.items.map((delegator: GuardianDelegatorPageItem) => (
+      {initialError ? (
+        <div className="guardian-delegators-feedback">
+          <NoData customMessage={entry && entry.error} />
+          <button type="button" onClick={retry}>Retry</button>
+        </div>
+      ) : empty ? (
+        <NoData />
+      ) : (
+        <>
+          <ListMaterial
+            titles={titles}
+            titleClassName="list-titles"
+            listClassName="guardian-delegators-table"
+            listHeaderBg="#F7F7F7"
+            isLoading={initialLoading}
+            loadingRows={5}
+          >
+            {entry
+              ? entry.items.map((delegator: GuardianDelegatorPageItem) => (
                 <GuardianDelegatorElement
                   delegator={delegator}
                   key={delegator.address}
                 />
-              ))}
-            </ListMaterial>
-            {entry.status === 'error' ? (
-              <div className="guardian-delegators-feedback guardian-delegators-feedback-inline">
-                <p>{entry.error}</p>
-                <button type="button" onClick={retry}>Retry</button>
-              </div>
-            ) : null}
-            {entry.nextCursor && entry.status !== 'error' ? (
-              <div className="guardian-delegators-pagination">
-                <button type="button" onClick={loadMore} disabled={entry.status === 'loading'}>
-                  {entry.status === 'loading' ? 'Loading…' : 'Load more'}
-                </button>
-                <p>{`${entry.items.length} / ${entry.total}`}</p>
-              </div>
-            ) : null}
-          </>
-        ) : null}
-      </LoadingComponent>
+                ))
+              : null}
+          </ListMaterial>
+          {entry && entry.status === 'error' ? (
+            <div className="guardian-delegators-feedback guardian-delegators-feedback-inline">
+              <p>{entry.error}</p>
+              <button type="button" onClick={retry}>Retry</button>
+            </div>
+          ) : null}
+          {entry && entry.nextCursor && entry.status !== 'error' ? (
+            <div className="guardian-delegators-pagination">
+              <button type="button" onClick={loadMore} disabled={entry.status === 'loading'}>
+                {entry.status === 'loading' ? 'Loading…' : 'Load more'}
+              </button>
+              <p>{`${entry.items.length} / ${entry.total}`}</p>
+            </div>
+          ) : null}
+        </>
+      )}
     </div>
   );
 };

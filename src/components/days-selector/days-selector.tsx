@@ -10,17 +10,23 @@ import './days-selector.scss';
 
 interface StateProps {
     selectDate: (date: Date) => void;
+    initialDate?: Date | null;
 }
-export const DaysSelector = ({ selectDate }: StateProps) => {
+export const DaysSelector = ({ selectDate, initialDate }: StateProps) => {
     const [ref, hasClickedOutside] = useClickOutside();
 
-    const [daysToSelect, setDaysToSelect] = useState<Date[]>(generateDays(20));
-    const [selectedDate, setSelectedDate] = useState<Date>(moment().toDate());
+    const daysToSelect = generateDays(20);
+    const [selectedDate, setSelectedDate] = useState<Date>(initialDate || moment().toDate());
     const [showDates, setShowDates] = useState<boolean>(false);
+    const initialTimestamp = initialDate ? initialDate.getTime() : undefined;
 
     useEffect(() => {
         setShowDates(false);
     }, [hasClickedOutside]);
+
+    useEffect(() => {
+        if (initialTimestamp !== undefined) setSelectedDate(new Date(initialTimestamp));
+    }, [initialTimestamp]);
 
     const select = (date: Date) => {
         setSelectedDate(date);
@@ -32,7 +38,11 @@ export const DaysSelector = ({ selectDate }: StateProps) => {
     useEffect(() => {
         const body: any = document.querySelector('body')
         if(!body) return
-        body.style.overflow = showDates ? 'hidden' : 'auto';
+        const previousOverflow = body.style.overflow;
+        body.style.overflow = showDates ? 'hidden' : '';
+        return () => {
+            body.style.overflow = previousOverflow;
+        };
     }, [showDates])
 
     return (

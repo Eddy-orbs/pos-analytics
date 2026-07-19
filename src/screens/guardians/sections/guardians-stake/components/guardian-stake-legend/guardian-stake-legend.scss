@@ -28,11 +28,24 @@
         height: 20px;
     }
 }
-@media (max-width: 576px) {
+@media (min-width: 768px) and (max-width: 1199px) {
+    .guardian-stake-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 18px;
+        margin: 0;
+        width: 100%;
+
+        div {
+            margin-bottom: 0;
+        }
+    }
+}
+
+@media (max-width: 767px) {
     .guardian-stake-legend{
        margin: auto;
         margin-top: 30px;
         margin-bottom: 30px;
     }
   }
-  

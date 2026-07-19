@@ -12,13 +12,14 @@ import {
 import Logo from '../../assets/images/navbar-logo.svg';
 import { NavigationLink, RouteParams } from '../../global/types';
 import { Languages } from './components/languages/Languages';
-import { isMobile } from 'react-device-detect';
 import { HamburgerButton } from 'react-hamburger-button';
 import ChainSelector from '../ChainSelector'
+import { useIsMobileViewport } from '../../hooks/useViewport';
 import './navigation-menu.scss';
 
 export const NavigationMenu: Component<any> = () => {
   const { t } = useTranslation();
+  const isMobile = useIsMobileViewport();
 
 
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
@@ -124,7 +125,7 @@ export const NavigationMenu: Component<any> = () => {
           <Languages />
         </nav>
       )}
-      {sideMenuOpen && (
+      {isMobile && sideMenuOpen && (
         <section className="side-nav-mobile">
           <nav className="navigation flex-column">
             <ul className="navigation-list flex-column">

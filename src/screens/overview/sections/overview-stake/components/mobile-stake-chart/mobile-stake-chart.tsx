@@ -1,10 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Doughnut } from 'react-chartjs-2';
 import { PosOverviewData } from '@orbs-network/pos-analytics-lib';
-import { generateDoghnutDataset, getDoughnutStakeChartData } from 'utils/overview/doghnut-chart';
+import {
+    generateDoghnutDataset,
+    getDoughnutStakeChartData,
+    getLatestOverviewDate
+} from 'utils/overview/doghnut-chart';
 import { useSelector } from 'react-redux';
 import { AppState } from 'redux/types/types';
-import moment from 'moment';
 import { LoadingComponent } from 'components/loading-component/loading-component';
 import { LoaderType } from 'global/enums';
 import { DaysSelector } from '../../../../../../components/days-selector/days-selector';
@@ -18,9 +21,15 @@ export const MobileStakeChart = () => {
     const { overviewData } = useSelector((state: AppState) => state.overview);
     const [rawData, setRawData] = useState<PosOverviewData[] | null>(null);
     const [selected, setSelected] = useState<null | PosOverviewData>(null);
+    const latestDate = getLatestOverviewDate(overviewData);
+
     useEffect(() => {
-        createChartDataset(moment().toDate());
-    }, []);
+        const initialDate = getLatestOverviewDate(overviewData);
+        const initialRawData = initialDate ? getDoughnutStakeChartData(initialDate, overviewData) : null;
+        if (!initialRawData) return;
+        setRawData(initialRawData);
+        setSelected(null);
+    }, [overviewData]);
 
     const createChartDataset = (date: Date) => {
         const newRawData = getDoughnutStakeChartData(date, overviewData);
@@ -57,7 +66,7 @@ export const MobileStakeChart = () => {
         <div className="mobile-overview-chart">
             <div className="mobile-overview-chart-title flex-center">
                 <h5 className="mobile-overview-chart-title-name">Overall stats</h5>
-                <DaysSelector selectDate={createChartDataset} />
+                <DaysSelector selectDate={createChartDataset} initialDate={latestDate} />
             </div>
             <div className="mobile-overview-chart-chart">
                 <LoadingComponent isLoading={!chartData} loaderType={LoaderType.BIG}>

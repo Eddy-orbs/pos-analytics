@@ -23,10 +23,11 @@ export const OverviewWeightChart = () => {
   const { t } = useTranslation();
 
   useEffect(() => {
-    if (!overviewWeightsChartData) {
-      selectChartData(ChartUnit.WEEK);
+    if (overviewData && guardians && !overviewWeightsChartData) {
+      const data = getWeightsChartData(ChartUnit.WEEK, overviewData, guardiansColors);
+      dispatch(setOverviewWeightsChartData(data));
     }
-  }, []);
+  }, [dispatch, guardians, guardiansColors, overviewData, overviewWeightsChartData]);
 
   const selectChartData = (unit: ChartUnit) => {
     if (!guardians) return;
@@ -36,7 +37,7 @@ export const OverviewWeightChart = () => {
   const noData = !overviewData && !overviewDataLoding;
 
   return (
-    <div>
+    <div className="overview-chart-panel">
       {noData ? (
         <NoData />
       ) : (

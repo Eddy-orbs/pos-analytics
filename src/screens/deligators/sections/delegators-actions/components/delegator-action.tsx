@@ -12,7 +12,7 @@ import moment from 'moment';
 import { useTranslation } from 'react-i18next';
 import { DelegatorActionsTypes } from 'global/enums';
 import { TableCell, TableRow } from '@material-ui/core';
-import { isMobile } from 'react-device-detect';
+import { useIsMobileViewport } from 'hooks/useViewport';
 import { getExplorerUrl } from 'utils/chain';
 import { useSelector } from 'react-redux';
 import { AppState } from 'redux/types/types';
@@ -22,6 +22,7 @@ interface StateProps {
 }
 
 export const DelegatorActionElement = ({ action }: StateProps) => {
+  const isMobile = useIsMobileViewport();
   const {
     amount,
     block_time,

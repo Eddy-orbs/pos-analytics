@@ -3,9 +3,23 @@
 
 .list {
   height: 100%;
-  overflow-x: hidden;
+  overflow-x: auto;
   .MuiTableCell-root {
     border-bottom: 1px dashed $list-border-color;
+  }
+
+  &-skeleton-row {
+    height: 58px;
+  }
+
+  &-skeleton-cell {
+    animation: list-skeleton-pulse 0.7s ease-in-out infinite alternate;
+    background: #e8ebef;
+    border-radius: 5px;
+    display: block;
+    height: 18px;
+    max-width: 220px;
+    width: 72%;
   }
   .MuiTableCell-head {
     border: none;
@@ -111,13 +125,26 @@
   }
 }
 
-@media (max-width: 576px) {
+@keyframes list-skeleton-pulse {
+  from {
+    opacity: 0.45;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 767px) {
   .list {
     .MuiTable-root {
       table-layout: fixed;
-      overflow: hidden;
       .MuiTableHead-root {
         tr {
+          th,
+          td {
+            padding: 12px 8px;
+          }
+
           .list-titles {
             font-size: 11px;
             overflow: hidden;

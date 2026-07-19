@@ -8,7 +8,6 @@ import { AppState } from 'redux/types/types';
 import { routes } from 'routes/routes';
 import { useClickOutside } from 'react-click-outside-hook';
 import LoupeImg from 'assets/images/loupe.svg';
-import { isMobile } from 'react-device-detect';
 
 import './delegator-search.scss';
 
@@ -62,7 +61,7 @@ export const DelegatorSearch = () => {
     };
 
     return (
-        <div className={`delegator-search search-input flex-column ${isMobile ? '' : 'flex-column'}`}>
+        <div className="delegator-search search-input flex-column">
             <p className="search-input-title">{t('main.address')}</p>
             <section className="search-input-box" ref={ref}>
                 <button

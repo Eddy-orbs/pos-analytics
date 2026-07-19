@@ -10,8 +10,9 @@ import { getGuardiansRewardActions } from 'utils/guardians';
 import { ListMaterial } from 'components/list/list-material';
 import { LoadingComponent } from 'components/loading-component/loading-component';
 import { LoaderType } from 'global/enums';
-import {isMobile} from 'react-device-detect'
+import { useIsMobileViewport } from 'hooks/useViewport';
 export const GuardianRewardsActions = () => {
+    const isMobile = useIsMobileViewport();
     const { selectedGuardian, guardianIsLoading } = useSelector((state: AppState) => state.guardians);
     const { t } = useTranslation();
     const titles = [

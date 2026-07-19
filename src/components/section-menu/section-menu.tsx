@@ -1,9 +1,6 @@
 import React, {
   FunctionComponent as Component,
-  useEffect,
-  useState,
 } from 'react';
-import { isMobile } from 'react-device-detect';
 import { Link, useParams } from 'react-router-dom';
 import {
   DelegatorsSections,
@@ -36,15 +33,11 @@ interface StateProps {
 }
 
 export const SectionMenu: Component<StateProps> = ({ options }: StateProps) => {
-  const [selected, setSelected] = useState<string | null>(null);
   const params: RouteParams = useParams();
-  useEffect(() => {
-    const newSelected = params.section;
-    setSelected(newSelected);
-  }, [window.location.pathname]);
+  const selected = params.section;
 
   return (
-    <ul className={`section-menu flex-${isMobile ? 'center' : 'start'}`}>
+    <ul className="section-menu flex-start">
       {options.map((option: MenuOption, index: number) => {
         const { route, key, name, disabled } = option;
 

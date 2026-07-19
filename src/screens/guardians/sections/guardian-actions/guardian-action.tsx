@@ -11,7 +11,7 @@ import {
 import { GuardianActionsTypes } from 'global/enums';
 import TableCell from '@material-ui/core/TableCell';
 import TableRow from '@material-ui/core/TableRow';
-import { isMobile } from 'react-device-detect';
+import { useIsMobileViewport } from 'hooks/useViewport';
 import { getExplorerUrl } from 'utils/chain';
 import { useSelector } from 'react-redux';
 import { AppState } from 'redux/types/types';
@@ -20,6 +20,7 @@ interface StateProps {
 }
 
 export const GuardianActionComponent = ({ action }: StateProps) => {
+  const isMobile = useIsMobileViewport();
   const {
     amount,
     block_time,

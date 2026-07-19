@@ -10,9 +10,10 @@ import { ListMaterial } from 'components/list/list-material';
 import { LoadingComponent } from 'components/loading-component/loading-component';
 import { LoaderType } from 'global/enums';
 import './delegators-actions.scss';
-import { isMobile } from 'react-device-detect';
+import { useIsMobileViewport } from 'hooks/useViewport';
 
 export const DeligatorsActions = () => {
+  const isMobile = useIsMobileViewport();
   const { selectedDelegator, delegatorIsLoading } = useSelector(
     (state: AppState) => state.delegator
   );

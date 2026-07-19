@@ -15,10 +15,12 @@ interface StateProps {
   children: any;
   listClassName?: string;
   listHeaderBg?: string;
+  isLoading?: boolean;
+  loadingRows?: number;
 }
 
 export const ListMaterial = (props: StateProps) => {
-  const { titles, titleClassName, listClassName, listHeaderBg } = props;
+  const { titles, titleClassName, listClassName, listHeaderBg, isLoading, loadingRows = 5 } = props;
   const className = listClassName ? `list ${listClassName}` : 'list';
   return (
     <TableContainer
@@ -27,6 +29,7 @@ export const ListMaterial = (props: StateProps) => {
       style={{
         boxShadow: 'none',
       }}
+      aria-busy={isLoading}
     >
       <Table stickyHeader>
         <TableHead>
@@ -47,7 +50,19 @@ export const ListMaterial = (props: StateProps) => {
             })}
           </TableRow>
         </TableHead>
-        <TableBody>{props.children}</TableBody>
+        <TableBody>
+          {isLoading
+            ? Array.from({ length: loadingRows }).map((_, rowIndex) => (
+                <TableRow className="list-skeleton-row" key={`skeleton-${rowIndex}`}>
+                  {titles.map((_, cellIndex) => (
+                    <TableCell key={`skeleton-${rowIndex}-${cellIndex}`}>
+                      <span className="list-skeleton-cell" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            : props.children}
+        </TableBody>
       </Table>
     </TableContainer>
   );

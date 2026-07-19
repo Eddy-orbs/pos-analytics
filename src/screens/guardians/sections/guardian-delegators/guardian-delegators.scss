@@ -10,15 +10,18 @@
                
             }
         }
-        .loader-list {
-            &-element {
-                div {
-                    width: 200px;
-                    padding-right: 40px;
-                    .loader {
-                        height: 20px;
-                        width: 100px;
-                    }
+        .guardian-delegators-table {
+            min-height: 360px;
+
+            th,
+            td {
+                &:nth-child(1) {
+                    width: 54%;
+                }
+
+                &:nth-child(2),
+                &:nth-child(3) {
+                    width: 23%;
                 }
             }
         }
@@ -52,5 +55,27 @@
     &-feedback-inline {
         color: #c0392b;
         padding-bottom: 0;
+    }
+}
+
+@media (max-width: 767px) {
+    .guardian-delegators-list {
+        padding: 0 12px 24px;
+
+        .guardian-delegators-table {
+            min-height: 330px;
+
+            th,
+            td {
+                &:nth-child(1) {
+                    width: 46%;
+                }
+
+                &:nth-child(2),
+                &:nth-child(3) {
+                    width: 27%;
+                }
+            }
+        }
     }
 }

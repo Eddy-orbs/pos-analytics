@@ -10,9 +10,10 @@ import { ListMaterial } from 'components/list/list-material';
 import { LoadingComponent } from 'components/loading-component/loading-component';
 import { LoaderType } from 'global/enums';
 import './guardian-actions.scss';
-import { isMobile } from 'react-device-detect';
+import { useIsMobileViewport } from 'hooks/useViewport';
 
 export const GuardianActions = () => {
+  const isMobile = useIsMobileViewport();
   const { selectedGuardian, guardianIsLoading } = useSelector(
     (state: AppState) => state.guardians
   );

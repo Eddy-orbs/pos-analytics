@@ -6,7 +6,6 @@ import { ChartUnit, LoaderType, OverviewChartType } from 'global/enums';
 import { Bar } from 'react-chartjs-2';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
-import { useHistory } from 'react-router-dom';
 import { setOverviewStakeChartData } from 'redux/actions/actions';
 import { AppState } from 'redux/types/types';
 import { getBarChartConfigOptions } from 'utils/bar-chart';
@@ -22,10 +21,11 @@ export const StakeBarChart = () => {
     const { t } = useTranslation();
 
     useEffect(() => {
-        if (!overviewStakeChartData) {
-            selectChartData(ChartUnit.WEEK);
+        if (overviewData && !overviewStakeChartData) {
+            const data = getStakeChartData(ChartUnit.WEEK, overviewData, guardiansColors);
+            dispatch(setOverviewStakeChartData(data));
         }
-    }, []);
+    }, [dispatch, guardiansColors, overviewData, overviewStakeChartData]);
 
     const selectChartData = (unit: ChartUnit) => {
         const data = getStakeChartData(unit, overviewData, guardiansColors);
@@ -37,7 +37,7 @@ export const StakeBarChart = () => {
     return noData ? (
         <NoData />
     ) : (
-        <div>
+        <div className="overview-chart-panel">
             <LoadingComponent isLoading={!overviewStakeChartData} loaderType={LoaderType.BIG}>
                 {overviewStakeChartData && (
                     <>
@@ -64,7 +64,6 @@ interface StateProps {
     total?: number;
 }
 const BarComponent = ({ chartData, total }: StateProps) => {
-    const history = useHistory();
     const ref = useRef<any>(null);
     const { t } = useTranslation();
     const goToGuardian = () => {};
