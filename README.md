@@ -8,9 +8,31 @@ State - redux, redux-thunk <br />
 
 ## Development
 
-The Project works in tandem with [github.com/orbs-network/pos-analytics-lib](orbs-network/pos-analytics-lib). 
+The Project works in tandem with [github.com/orbs-network/pos-analytics-lib](orbs-network/pos-analytics-lib).
 
-> **I order to run this code, you need to create a .env file with `REACT_APP_MAINNET_RPC` and `REACT_APP_POLYGON_RPC` entries.**
+### Environment variables
+
+Create a local `.env` file before starting or building the application:
+
+```dotenv
+REACT_APP_MAINNET_RPC=https://...
+REACT_APP_POLYGON_RPC=https://...
+REACT_APP_SUBGRAPH_BASE_URL=https://hub.orbs.network
+```
+
+- `REACT_APP_MAINNET_RPC` and `REACT_APP_POLYGON_RPC` are required RPC
+  endpoints for Ethereum and Polygon.
+- `REACT_APP_SUBGRAPH_BASE_URL` is the optional base URL of the
+  Subgraph-compatible GraphQL service used for indexed Guardian history. The
+  default is `https://hub.orbs.network`. The application appends
+  `/delegationsSubgraphEth` or `/delegationsSubgraphPolygon` for the selected
+  chain.
+- A non-default compatible service that also exposes the Delegator stake-event
+  index enables indexed Delegator history. The legacy default host does not
+  expose that index, so Delegator history uses the RPC compatibility path.
+- Create React App embeds these values at build time. Rebuild the application
+  after changing any of them, and do not commit the local `.env` file.
+
 **For Production deployment, don't use a free Infura account!**
 
 For a root-domain test deployment, set `PUBLIC_URL=/`. Static asset paths and
