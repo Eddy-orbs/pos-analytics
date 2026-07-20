@@ -1,4 +1,4 @@
-import { Delegator, DelegatorAction, DelegatorInfo } from '@orbs-network/pos-analytics-lib';
+import { Delegator, DelegatorAction, DelegatorInfo } from 'pos-analytics-graph';
 import { TFunction } from 'i18next';
 import { ChartColors, ChartUnit, ChartYaxis, DelegatorActionsTypes, DelegatorsSections } from '../global/enums';
 import { ChartData, MenuOption } from '../global/types';

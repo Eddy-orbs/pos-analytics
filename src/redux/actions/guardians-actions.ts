@@ -1,4 +1,4 @@
-import { Guardian } from '@orbs-network/pos-analytics-lib';
+import { Guardian } from 'pos-analytics-graph';
 import { BlockRef } from 'redux/types/main-types';
 import { CHAINS } from 'types';
 import { getChainConfig } from 'utils/chain';

@@ -8,7 +8,7 @@ import CopyImg from 'assets/images/copy.svg';
 import { LoadingComponent } from 'components/loading-component/loading-component';
 import { LoaderType, OverviewChartType } from 'global/enums';
 import { useTranslation } from 'react-i18next';
-import { PosOverview, PosOverviewData } from '@orbs-network/pos-analytics-lib';
+import { PosOverview, PosOverviewData } from 'pos-analytics-graph';
 import './overview-guardians.scss';
 
 const listToRender = (overviewData?: PosOverview) => {

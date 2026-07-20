@@ -1,4 +1,4 @@
-import { DelegatorAction } from '@orbs-network/pos-analytics-lib';
+import { DelegatorAction } from 'pos-analytics-graph';
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'redux/types/types';

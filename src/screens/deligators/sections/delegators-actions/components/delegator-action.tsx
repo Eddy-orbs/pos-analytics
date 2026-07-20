@@ -1,4 +1,4 @@
-import { DelegatorAction } from '@orbs-network/pos-analytics-lib';
+import { DelegatorAction } from 'pos-analytics-graph';
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { routes } from 'routes/routes';

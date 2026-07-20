@@ -1,4 +1,4 @@
-import { PosOverviewData } from '@orbs-network/pos-analytics-lib';
+import { PosOverviewData } from 'pos-analytics-graph';
 import React from 'react';
 import { useHistory } from 'react-router-dom';
 import { routes } from 'routes/routes';

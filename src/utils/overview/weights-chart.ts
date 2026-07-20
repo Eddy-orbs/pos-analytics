@@ -1,4 +1,4 @@
-import { PosOverview, PosOverviewSlice, PosOverviewData } from '@orbs-network/pos-analytics-lib';
+import { PosOverview, PosOverviewSlice, PosOverviewData } from 'pos-analytics-graph';
 import { OverviewGuardianDataset, GuardiansChartDatasetObject } from 'global/types';
 import { findIndexInArray } from 'utils/array';
 import { ChartUnit } from '../../global/enums';

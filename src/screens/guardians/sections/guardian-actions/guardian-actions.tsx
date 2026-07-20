@@ -2,7 +2,7 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'redux/types/types';
 import moment from 'moment';
-import { GuardianAction } from '@orbs-network/pos-analytics-lib';
+import { GuardianAction } from 'pos-analytics-graph';
 import { NoData } from 'components/no-data/no-data';
 import { useTranslation } from 'react-i18next';
 import { GuardianActionComponent } from './guardian-action';

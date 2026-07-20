@@ -1,4 +1,4 @@
-import { PosOverview } from '@orbs-network/pos-analytics-lib';
+import { PosOverview } from 'pos-analytics-graph';
 
 export interface OverviewState {
     overviewData?: PosOverview;

@@ -1,4 +1,4 @@
-import { GuardianInfo } from '@orbs-network/pos-analytics-lib';
+import { GuardianInfo } from 'pos-analytics-graph';
 import { BalanceSection } from 'components/balance-section/balance-section';
 import React from 'react';
 import { useTranslation } from 'react-i18next';

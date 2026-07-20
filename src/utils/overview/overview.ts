@@ -1,4 +1,4 @@
-import { PosOverviewData, PosOverviewSlice } from '@orbs-network/pos-analytics-lib';
+import { PosOverviewData, PosOverviewSlice } from 'pos-analytics-graph';
 import { TFunction } from 'i18next';
 import moment from 'moment';
 import _ from 'lodash';

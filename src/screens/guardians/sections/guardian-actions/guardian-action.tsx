@@ -1,4 +1,4 @@
-import { GuardianAction } from '@orbs-network/pos-analytics-lib';
+import { GuardianAction } from 'pos-analytics-graph';
 import React, { useMemo } from 'react';
 import moment from 'moment';
 import { useTranslation } from 'react-i18next';

@@ -1,5 +1,5 @@
 import { TableCell, TableRow } from '@material-ui/core';
-import { GuardianAction } from '@orbs-network/pos-analytics-lib';
+import { GuardianAction } from 'pos-analytics-graph';
 import moment from 'moment';
 import React from 'react';
 import { useTranslation } from 'react-i18next';

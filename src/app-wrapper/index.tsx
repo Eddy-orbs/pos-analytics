@@ -4,7 +4,7 @@ import { getRouterBaseName } from '../utils/router';
 import { useDispatch } from 'react-redux';
 import { setInitialConfiguration } from '../redux/actions/global-actions';
 import { AppLoader } from '../components/app-loader/app-loader';
-import { getRefBlocks } from '@orbs-network/pos-analytics-lib/dist/eth-helpers';
+import { getRefBlocks } from 'pos-analytics-graph';
 import { chains } from '../config';
 import { CHAINS } from '../types';
 

@@ -2,7 +2,7 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'redux/types/types';
 import moment from 'moment';
-import { DelegatorAction } from '@orbs-network/pos-analytics-lib';
+import { DelegatorAction } from 'pos-analytics-graph';
 import { DelegatorActionElement } from './components/delegator-action';
 import { NoData } from 'components/no-data/no-data';
 import { useTranslation } from 'react-i18next';
