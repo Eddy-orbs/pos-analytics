@@ -151,22 +151,32 @@ export interface StreamQuery {
 }
 
 const PAGE_SIZE = 1000;
+const GLOBAL_STREAM_PARTITIONS = 8;   // big unfiltered streams (e.g. Polygon allocated: 150k+ rows)
+const FILTERED_STREAM_PARTITIONS = 4;
 
-// Reads one event stream, cursor-paginated by id (skip-based paging caps at 5000 rows
-// on The Graph). Returns raw subgraph rows in id order - callers sort by block fields.
+// head block per chain, briefly cached - used to bound partitioned reads
+const headCache: {[chainId: number]: {block: number, at: number}} = {};
+async function subgraphHeadBlock(chainId: number): Promise<number> {
+    const cached = headCache[chainId];
+    if (cached && Date.now() - cached.at < 30000) return cached.block;
+    const data = await postQuery(getSubgraphEndpoint(chainId), '{ _meta { block { number } } }');
+    const block = Number(data._meta.block.number);
+    headCache[chainId] = { block, at: Date.now() };
+    return block;
+}
+
+// Cursor-paginates one block range of a stream by id (skip-based paging caps at 5000
+// rows on The Graph). Row order within/across ranges is arbitrary - callers sort.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function readSubgraphStream(chainId: number, spec: EventSpec, q: StreamQuery): Promise<any[]> {
-    const endpoint = getSubgraphEndpoint(chainId);
-    const addressField = q.addressFieldOverride || spec.addressField;
+async function readStreamRange(endpoint: string, spec: EventSpec, addressField: string | undefined, address: string | undefined, fromBlock: number, toBlock: number): Promise<any[]> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const out: any[] = [];
     let lastId = '';
     for (;;) {
-        const where: string[] = [`blockNumber_gte: ${q.fromBlock}`];
-        if (q.toBlock !== undefined) where.push(`blockNumber_lte: ${q.toBlock}`);
-        if (q.address !== undefined) {
+        const where: string[] = [`blockNumber_gte: ${fromBlock}`, `blockNumber_lte: ${toBlock}`];
+        if (address !== undefined) {
             if (!addressField) throw new Error(`event ${spec.name} has no indexed address field to filter on`);
-            where.push(`${addressField}: "${q.address.toLowerCase()}"`);
+            where.push(`${addressField}: "${address.toLowerCase()}"`);
         }
         if (lastId) where.push(`id_gt: "${lastId}"`);
         const query = `{ ${spec.plural}(first: ${PAGE_SIZE}, orderBy: id, orderDirection: asc, where: {${where.join(', ')}}) { id ${spec.fields.join(' ')} blockNumber blockTimestamp transactionHash logIndex txIndex } }`;
@@ -175,6 +185,33 @@ export async function readSubgraphStream(chainId: number, spec: EventSpec, q: St
         for (const row of rows) out.push(row);
         if (rows.length < PAGE_SIZE) break;
         lastId = rows[rows.length - 1].id;
+    }
+    return out;
+}
+
+// Reads one event stream. The block range is split into partitions paginated in
+// parallel - big streams (Polygon StakingRewardsAllocated: 150k+ rows) would otherwise
+// pay one sequential round-trip per 1000 rows.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function readSubgraphStream(chainId: number, spec: EventSpec, q: StreamQuery): Promise<any[]> {
+    const endpoint = getSubgraphEndpoint(chainId);
+    const addressField = q.addressFieldOverride || spec.addressField;
+    const toBlock = q.toBlock !== undefined ? q.toBlock : await subgraphHeadBlock(chainId);
+    if (toBlock < q.fromBlock) return [];
+    const partitions = Math.min(
+        q.address !== undefined ? FILTERED_STREAM_PARTITIONS : GLOBAL_STREAM_PARTITIONS,
+        Math.max(1, Math.ceil((toBlock - q.fromBlock + 1) / 100000))
+    );
+    const step = Math.ceil((toBlock - q.fromBlock + 1) / partitions);
+    const ranges: {from: number, to: number}[] = [];
+    for (let b = q.fromBlock; b <= toBlock; b += step) {
+        ranges.push({ from: b, to: Math.min(b + step - 1, toBlock) });
+    }
+    const results = await Promise.all(ranges.map(r => readStreamRange(endpoint, spec, addressField, q.address, r.from, r.to)));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const out: any[] = [];
+    for (const rows of results) {
+        for (const row of rows) out.push(row);
     }
     return out;
 }
