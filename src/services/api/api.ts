@@ -8,12 +8,15 @@ import {
     getGuardianStakeHistory,
     getGuardians,
     GuardianCurrent,
+    GuardianDelegatorsCacheSnapshot,
     GuardianDelegatorsPage,
+    GuardianStakeHistoryAnchorSnapshot,
     GuardianStakeHistory,
     getOverview,
     resolveBlockAtOrAfterTimestamp
 } from '@orbs-network/pos-analytics-lib';
 import axios from 'axios';
+import { indexedDelegatorHistoryEnabled, subgraphBaseUrl } from '../../config';
 import { SupportedLanguage } from '../../global/types';
 import { LOCAIZE_API, LOCAIZE_PROJECT_ID } from '../../global/variables';
 
@@ -30,13 +33,16 @@ class Api {
         address: string,
         web3: any,
         cursor?: string,
-        signal?: AbortSignal
+        signal?: AbortSignal,
+        cachedSnapshot?: GuardianDelegatorsCacheSnapshot
     ): Promise<GuardianDelegatorsPage | undefined> {
         try {
             return await getGuardianDelegatorsPage(address, web3, {
                 cursor,
                 page_size: 50,
-                signal
+                signal,
+                cached_snapshot: cachedSnapshot,
+                subgraph_base_url: subgraphBaseUrl
             });
         } catch (error) {
             return undefined;
@@ -59,16 +65,50 @@ class Api {
         web3: any,
         fromBlock: number,
         signal?: AbortSignal,
-        sampleTimestamps: number[] = [],
-        currentSnapshot?: DelegatorCurrent
+        currentSnapshot?: DelegatorCurrent,
+        mutableCacheTtlMs: number = 0
     ): Promise<DelegatorStakeHistory | undefined> {
         try {
             return await getDelegatorStakeHistory(address, web3, {
                 from_block: fromBlock,
-                sample_timestamps: sampleTimestamps,
                 current_snapshot: currentSnapshot,
-                state_call_interval_ms: 350,
-                signal
+                signal,
+                ...(indexedDelegatorHistoryEnabled ? { subgraph_base_url: subgraphBaseUrl } : {}),
+                event_query_options: {
+                    cache: true,
+                    cacheMutableForMs: mutableCacheTtlMs,
+                    loadHistoricalContractManifest: false,
+                    minRequestIntervalMs: 150,
+                    signal
+                }
+            });
+        } catch (error) {
+            return undefined;
+        }
+    }
+
+    async getDelegatorStakeHistoryFromTimeApi(
+        address: string,
+        web3: any,
+        fromTime: number,
+        signal?: AbortSignal,
+        currentSnapshot?: DelegatorCurrent,
+        mutableCacheTtlMs: number = 0
+    ): Promise<DelegatorStakeHistory | undefined> {
+        if (!indexedDelegatorHistoryEnabled) return undefined;
+        try {
+            return await getDelegatorStakeHistory(address, web3, {
+                from_time: fromTime,
+                current_snapshot: currentSnapshot,
+                signal,
+                subgraph_base_url: subgraphBaseUrl,
+                event_query_options: {
+                    cache: true,
+                    cacheMutableForMs: mutableCacheTtlMs,
+                    loadHistoricalContractManifest: false,
+                    minRequestIntervalMs: 150,
+                    signal
+                }
             });
         } catch (error) {
             return undefined;
@@ -80,16 +120,51 @@ class Api {
         web3: any,
         fromBlock: number,
         signal?: AbortSignal,
-        sampleTimestamps: number[] = [],
-        currentSnapshot?: GuardianCurrent
+        currentSnapshot?: GuardianCurrent,
+        mutableCacheTtlMs: number = 0,
+        anchorSnapshot?: GuardianStakeHistoryAnchorSnapshot
     ): Promise<GuardianStakeHistory | undefined> {
         try {
             return await getGuardianStakeHistory(address, web3, {
                 from_block: fromBlock,
-                sample_timestamps: sampleTimestamps,
                 current_snapshot: currentSnapshot,
-                state_call_interval_ms: 350,
-                signal
+                guardian_anchor_snapshot: anchorSnapshot,
+                signal,
+                subgraph_base_url: subgraphBaseUrl,
+                event_query_options: {
+                    cache: true,
+                    cacheMutableForMs: mutableCacheTtlMs,
+                    loadHistoricalContractManifest: false,
+                    minRequestIntervalMs: 150,
+                    signal
+                }
+            });
+        } catch (error) {
+            return undefined;
+        }
+    }
+
+    async getGuardianStakeHistoryFromTimeApi(
+        address: string,
+        web3: any,
+        fromTime: number,
+        signal?: AbortSignal,
+        currentSnapshot?: GuardianCurrent,
+        mutableCacheTtlMs: number = 0
+    ): Promise<GuardianStakeHistory | undefined> {
+        try {
+            return await getGuardianStakeHistory(address, web3, {
+                from_time: fromTime,
+                current_snapshot: currentSnapshot,
+                signal,
+                subgraph_base_url: subgraphBaseUrl,
+                event_query_options: {
+                    cache: true,
+                    cacheMutableForMs: mutableCacheTtlMs,
+                    loadHistoricalContractManifest: false,
+                    minRequestIntervalMs: 150,
+                    signal
+                }
             });
         } catch (error) {
             return undefined;

@@ -1,6 +1,9 @@
 .time-range-selector {
+  align-items: center;
+  display: flex;
   gap: 10px;
   height: auto;
+  justify-content: flex-start;
   min-height: 32px;
 
   button {
@@ -27,6 +30,8 @@
   .time-range-selector {
     align-items: center;
     justify-content: center;
+    margin-left: auto;
+    margin-right: auto;
     padding: 0;
     width: 100%;
 

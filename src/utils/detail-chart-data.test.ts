@@ -41,7 +41,12 @@ const delegatorCurrent = ({
 
 const guardianHistory = (stakeSlices: GuardianStakeHistory['stake_slices']): GuardianStakeHistory => ({
     address: guardianCurrent.address,
-    range: { from_block: 100, to_block: 200 },
+    range: {
+        from_block: 100,
+        to_block: 200,
+        from_time: stakeSlices.length > 0 ? stakeSlices[0].block_time : asOfTime,
+        to_time: asOfTime
+    },
     stake_slices: stakeSlices,
     data_quality: dataQuality
 });
@@ -54,7 +59,7 @@ const delegatorHistory = (stakeSlices: DelegatorStakeHistory['stake_slices']): D
 });
 
 describe('detail chart data adapters', () => {
-    it('creates ten weekly Guardian buckets and hides an unavailable delegator-count series', () => {
+    it('keeps every Guardian event point and hides an unavailable delegator-count series', () => {
         const history = guardianHistory([
             {
                 block_number: 100,
@@ -63,24 +68,34 @@ describe('detail chart data adapters', () => {
                 delegated_stake: 20,
                 total_stake: 30,
                 n_delegates: 2
+            },
+            {
+                block_number: 150,
+                block_time: asOfTime - 35 * 24 * 60 * 60,
+                self_stake: 20,
+                delegated_stake: 30,
+                total_stake: 50,
+                n_delegates: 3,
+                transaction_hash: '0xevent',
+                log_index: 0
             }
         ]);
 
         const chart = buildGuardianDetailChartData(history, guardianCurrent, ChartUnit.WEEK);
 
         expect(chart.unit).toBe(ChartUnit.WEEK);
-        expect(chart.datasets).toHaveLength(3);
-        chart.datasets.forEach((dataset) => expect(dataset.data).toHaveLength(10));
+        expect(chart.datasets).toHaveLength(2);
+        chart.datasets.forEach((dataset) => expect(dataset.data).toHaveLength(3));
         expect(chart.datasets.map(({ color, yAxis }) => ({ color, yAxis }))).toEqual([
-            { color: ChartColors.TOTAL_STAKE, yAxis: ChartYaxis.Y1 },
-            { color: ChartColors.SELF_STAKE, yAxis: ChartYaxis.Y1 },
-            { color: ChartColors.DELEGATORS, yAxis: ChartYaxis.Y1 }
+            { color: ChartColors.TOTAL_STAKE, yAxis: ChartYaxis.Y2 },
+            { color: ChartColors.SELF_STAKE, yAxis: ChartYaxis.Y2 }
         ]);
-        expect(chart.datasets.map((dataset) => dataset.data[9].y)).toEqual([100, 40, 60]);
-        expect(chart.datasets[0].data[9].x).toBe(asOfTime * 1000);
+        expect(chart.datasets[0].data.map((point) => point.y)).toEqual([30, 50, 100]);
+        expect(chart.datasets[1].data.map((point) => point.y)).toEqual([10, 20, 40]);
+        expect(chart.datasets[0].data[2].x).toBe(asOfTime * 1000);
     });
 
-    it('creates ten calendar-month Delegator buckets and pins the current values to the endpoint', () => {
+    it('keeps every in-range Delegator event and pins current values to the endpoint', () => {
         const history = delegatorHistory([
             {
                 block_number: 100,
@@ -100,19 +115,27 @@ describe('detail chart data adapters', () => {
 
         expect(chart.unit).toBe(ChartUnit.MONTH);
         expect(chart.datasets).toHaveLength(2);
-        chart.datasets.forEach((dataset) => expect(dataset.data).toHaveLength(10));
+        chart.datasets.forEach((dataset) => expect(dataset.data).toHaveLength(3));
         expect(chart.datasets[0]).toMatchObject({ color: ChartColors.TOTAL_STAKE, yAxis: ChartYaxis.Y1 });
         expect(chart.datasets[1]).toMatchObject({ color: ChartColors.SELF_STAKE, yAxis: ChartYaxis.Y1 });
-        expect(chart.datasets[0].data[9]).toEqual({ x: asOfTime * 1000, y: 75 });
-        expect(chart.datasets[1].data[9]).toEqual({ x: asOfTime * 1000, y: 5 });
+        expect(chart.datasets[0].data).toEqual([
+            { x: Date.UTC(2025, 9, 1), y: 20 },
+            { x: Date.UTC(2026, 2, 1), y: 50 },
+            { x: asOfTime * 1000, y: 75 }
+        ]);
+        expect(chart.datasets[1].data).toEqual([
+            { x: Date.UTC(2025, 9, 1), y: 10 },
+            { x: Date.UTC(2026, 2, 1), y: 8 },
+            { x: asOfTime * 1000, y: 5 }
+        ]);
     });
 
-    it('produces flat ten-point series when the range contains no events', () => {
+    it('produces a flat boundary-to-current series when the range contains no events', () => {
         const chart = buildDelegatorDetailChartData(delegatorHistory([]), delegatorCurrent, ChartUnit.WEEK);
 
-        expect(chart.datasets[0].data).toHaveLength(10);
-        expect(chart.datasets[0].data.map((point) => point.y)).toEqual(Array(10).fill(75));
-        expect(chart.datasets[1].data.map((point) => point.y)).toEqual(Array(10).fill(5));
+        expect(chart.datasets[0].data).toHaveLength(2);
+        expect(chart.datasets[0].data.map((point) => point.y)).toEqual([75, 75]);
+        expect(chart.datasets[1].data.map((point) => point.y)).toEqual([5, 5]);
     });
 
     it('adds delegator count only when the history marks it as available', () => {
@@ -130,8 +153,49 @@ describe('detail chart data adapters', () => {
 
         const chart = buildGuardianDetailChartData(history, guardianCurrent, ChartUnit.WEEK);
 
-        expect(chart.datasets).toHaveLength(4);
-        expect(chart.datasets[3]).toMatchObject({ color: ChartColors.DELEGATORS, yAxis: ChartYaxis.Y1 });
-        expect(chart.datasets[3].data[9]).toEqual({ x: asOfTime * 1000, y: 2 });
+        expect(chart.datasets).toHaveLength(3);
+        expect(chart.datasets.map(({ color, yAxis }) => ({ color, yAxis }))).toEqual([
+            { color: ChartColors.TOTAL_STAKE, yAxis: ChartYaxis.Y2 },
+            { color: ChartColors.DELEGATORS, yAxis: ChartYaxis.Y1 },
+            { color: ChartColors.SELF_STAKE, yAxis: ChartYaxis.Y2 }
+        ]);
+        expect(chart.datasets[1].data[chart.datasets[1].data.length - 1]).toEqual({
+            x: asOfTime * 1000,
+            y: 2
+        });
+    });
+
+    it('slices one long Guardian raw history for shorter Day and Week views', () => {
+        const oldMonthEvent = Date.UTC(2025, 10, 1) / 1000;
+        const recentDayEvent = asOfTime - 2 * 24 * 60 * 60;
+        const rawHistory = guardianHistory([
+            {
+                block_number: 100,
+                block_time: oldMonthEvent,
+                self_stake: 10,
+                delegated_stake: 20,
+                total_stake: 30,
+                n_delegates: 1
+            },
+            {
+                block_number: 190,
+                block_time: recentDayEvent,
+                self_stake: 20,
+                delegated_stake: 40,
+                total_stake: 60,
+                n_delegates: 2
+            }
+        ]);
+
+        const day = buildGuardianDetailChartData(rawHistory, guardianCurrent, ChartUnit.DAY);
+        const week = buildGuardianDetailChartData(rawHistory, guardianCurrent, ChartUnit.WEEK);
+        const month = buildGuardianDetailChartData(rawHistory, guardianCurrent, ChartUnit.MONTH);
+
+        expect(day.datasets[0].data[0].x).toBe(Date.UTC(2026, 6, 6));
+        expect(week.datasets[0].data[0].x).toBe(Date.UTC(2026, 4, 11));
+        expect(month.datasets[0].data[0].x).toBe(Date.UTC(2025, 9, 1));
+        expect(day.datasets[0].data.some((point) => point.x === oldMonthEvent * 1000)).toBe(false);
+        expect(week.datasets[0].data.some((point) => point.x === oldMonthEvent * 1000)).toBe(false);
+        expect(month.datasets[0].data.some((point) => point.x === oldMonthEvent * 1000)).toBe(true);
     });
 });

@@ -20,11 +20,10 @@ const initialState: DelegatorState = {
     delegatorChartData: undefined,
     activeDelegatorKey: undefined,
     activeDelegatorHistoryUnit: DEFAULT_DELEGATOR_HISTORY_UNIT,
+    historyUnitByKey: {},
     currentByKey: {},
     historyByKey: {}
 };
-
-const historyKey = (detailKey: string, unit: string): string => `${detailKey}:${unit}`;
 
 const toDelegatorInfo = (current: DelegatorCurrent, history?: DelegatorStakeHistory): DelegatorInfo => ({
     address: current.address,
@@ -44,50 +43,108 @@ const toDelegatorInfo = (current: DelegatorCurrent, history?: DelegatorStakeHist
     reward_slices: []
 });
 
-const selectedFor = (state: DelegatorState, detailKey: string, unit: string): DelegatorInfo | undefined => {
+const selectedFor = (state: DelegatorState, detailKey: string): DelegatorInfo | undefined => {
     const current = state.currentByKey[detailKey];
-    if (!current || current.status !== 'loaded' || !current.data) return undefined;
-    const history = state.historyByKey[historyKey(detailKey, unit)];
-    return toDelegatorInfo(current.data, history && history.status === 'loaded' ? history.data : undefined);
+    if (!current || !current.data) return undefined;
+    const history = state.historyByKey[detailKey];
+    return toDelegatorInfo(current.data, history && history.data);
 };
 
 export const delegatorReducer = (state = initialState, { payload, type }: any): DelegatorState => {
     switch (type) {
+        case types.DELEGATOR.DELEGATOR_DETAIL_HYDRATE: {
+            const existingCurrent = state.currentByKey[payload.key];
+            const existingHistory = state.historyByKey[payload.key];
+            const currentByKey = payload.current && (!existingCurrent || !existingCurrent.data)
+                ? {
+                    ...state.currentByKey,
+                    [payload.key]: {
+                        key: payload.key,
+                        address: payload.address,
+                        chain: payload.chain,
+                        status: 'loaded' as const,
+                        data: payload.current.data,
+                        loadedAt: payload.current.loadedAt,
+                        error: undefined,
+                        notFound: false
+                    }
+                }
+                : state.currentByKey;
+            const historyByKey = payload.history && (!existingHistory || !existingHistory.data)
+                ? {
+                    ...state.historyByKey,
+                    [payload.key]: {
+                        key: payload.key,
+                        detailKey: payload.key,
+                        address: payload.address,
+                        chain: payload.chain,
+                        status: 'loaded' as const,
+                        data: payload.history.data,
+                        coveredFromTime: payload.history.coveredFromTime,
+                        latestBlock: payload.history.latestBlock,
+                        loadedAt: payload.history.loadedAt,
+                        error: undefined
+                    }
+                }
+                : state.historyByKey;
+            const next = { ...state, currentByKey, historyByKey };
+            if (state.activeDelegatorKey !== payload.key) return next;
+            const current = currentByKey[payload.key];
+            const history = historyByKey[payload.key];
+            return {
+                ...next,
+                delegatorCurrent: current && current.data,
+                selectedDelegator: selectedFor(next, payload.key),
+                delegatorNotFound: false,
+                delegatorIsLoading: !current || !current.data,
+                delegatorCurrentError: undefined,
+                delegatorHistoryIsLoading: false,
+                delegatorHistoryError: history && history.status === 'error' ? history.error : undefined
+            };
+        }
         case types.DELEGATOR.SELECT_DELEGATOR_DETAIL: {
             const key = payload.key;
             const current = state.currentByKey[key];
-            const unit = DEFAULT_DELEGATOR_HISTORY_UNIT;
-            const history = state.historyByKey[historyKey(key, unit)];
+            const unit = state.historyUnitByKey[key] || DEFAULT_DELEGATOR_HISTORY_UNIT;
+            const history = state.historyByKey[key];
             return {
                 ...state,
                 activeDelegatorKey: key,
                 activeDelegatorHistoryUnit: unit,
-                selectedDelegator: selectedFor(state, key, unit),
-                delegatorCurrent: current && current.status === 'loaded' ? current.data : undefined,
-                delegatorNotFound: !!current && current.status === 'error' && !!current.notFound,
-                delegatorIsLoading: !current || current.status === 'loading' || current.status === 'idle',
-                delegatorCurrentError: current && current.status === 'error' && !current.notFound
+                selectedDelegator: selectedFor(state, key),
+                delegatorCurrent: current && current.data,
+                delegatorNotFound: !!current && !current.data && current.status === 'error' && !!current.notFound,
+                delegatorIsLoading: !current || (!current.data && (current.status === 'loading' || current.status === 'idle')),
+                delegatorCurrentError: current && !current.data && current.status === 'error' && !current.notFound
                     ? current.error
                     : undefined,
-                delegatorHistoryIsLoading: !!history && history.status === 'loading',
-                delegatorHistoryError: history && history.status === 'error' ? history.error : undefined,
+                delegatorHistoryIsLoading: !!history && !history.data && history.status === 'loading',
+                delegatorHistoryError: history && !history.data && history.status === 'error' ? history.error : undefined,
                 delegatorChartData: undefined
             };
         }
         case types.DELEGATOR.DELEGATOR_CURRENT_REQUEST: {
+            const existing = state.currentByKey[payload.key];
             const entry = {
+                ...existing,
                 key: payload.key,
                 address: payload.address,
                 chain: payload.chain,
                 requestId: payload.requestId,
-                status: 'loading' as const
+                status: 'loading' as const,
+                error: undefined,
+                notFound: false
             };
+            const currentByKey = { ...state.currentByKey, [payload.key]: entry };
+            const next = { ...state, currentByKey };
+            const active = state.activeDelegatorKey === payload.key;
             return {
-                ...state,
-                currentByKey: { ...state.currentByKey, [payload.key]: entry },
-                delegatorNotFound: state.activeDelegatorKey === payload.key ? false : state.delegatorNotFound,
-                delegatorIsLoading: state.activeDelegatorKey === payload.key ? true : state.delegatorIsLoading,
-                delegatorCurrentError: state.activeDelegatorKey === payload.key ? undefined : state.delegatorCurrentError
+                ...next,
+                delegatorCurrent: active && entry.data ? entry.data : state.delegatorCurrent,
+                selectedDelegator: active && entry.data ? selectedFor(next, payload.key) : state.selectedDelegator,
+                delegatorNotFound: active ? false : state.delegatorNotFound,
+                delegatorIsLoading: active ? !entry.data : state.delegatorIsLoading,
+                delegatorCurrentError: active ? undefined : state.delegatorCurrentError
             };
         }
         case types.DELEGATOR.DELEGATOR_CURRENT_SUCCESS: {
@@ -109,7 +166,7 @@ export const delegatorReducer = (state = initialState, { payload, type }: any): 
             return {
                 ...next,
                 delegatorCurrent: payload.data,
-                selectedDelegator: selectedFor(next, payload.key, state.activeDelegatorHistoryUnit),
+                selectedDelegator: selectedFor(next, payload.key),
                 delegatorNotFound: false,
                 delegatorIsLoading: false,
                 delegatorCurrentError: undefined
@@ -118,6 +175,28 @@ export const delegatorReducer = (state = initialState, { payload, type }: any): 
         case types.DELEGATOR.DELEGATOR_CURRENT_FAILURE: {
             const pending = state.currentByKey[payload.key];
             if (!pending || pending.key !== payload.key || pending.requestId !== payload.requestId) return state;
+            if (pending.data) {
+                const currentByKey = {
+                    ...state.currentByKey,
+                    [payload.key]: {
+                        ...pending,
+                        requestId: undefined,
+                        status: 'loaded' as const,
+                        error: payload.error,
+                        notFound: false
+                    }
+                };
+                const next = { ...state, currentByKey };
+                if (state.activeDelegatorKey !== payload.key) return next;
+                return {
+                    ...next,
+                    delegatorCurrent: pending.data,
+                    selectedDelegator: selectedFor(next, payload.key),
+                    delegatorNotFound: false,
+                    delegatorIsLoading: false,
+                    delegatorCurrentError: payload.error
+                };
+            }
             const currentByKey = {
                 ...state.currentByKey,
                 [payload.key]: {
@@ -142,92 +221,114 @@ export const delegatorReducer = (state = initialState, { payload, type }: any): 
         }
         case types.DELEGATOR.SELECT_DELEGATOR_HISTORY: {
             if (state.activeDelegatorKey !== payload.detailKey) return state;
-            const entry = state.historyByKey[payload.key];
+            const entry = state.historyByKey[payload.detailKey];
             return {
                 ...state,
                 activeDelegatorHistoryUnit: payload.unit,
-                selectedDelegator: selectedFor(state, payload.detailKey, payload.unit),
-                delegatorHistoryIsLoading: !!entry && entry.status === 'loading',
-                delegatorHistoryError: entry && entry.status === 'error' ? entry.error : undefined,
+                historyUnitByKey: { ...state.historyUnitByKey, [payload.detailKey]: payload.unit },
+                selectedDelegator: selectedFor(state, payload.detailKey),
+                delegatorHistoryIsLoading: !!entry && !entry.data && entry.status === 'loading',
+                delegatorHistoryError: entry && !entry.data && entry.status === 'error' ? entry.error : undefined,
                 delegatorChartData: state.activeDelegatorHistoryUnit === payload.unit
                     ? state.delegatorChartData
                     : undefined
             };
         }
         case types.DELEGATOR.DELEGATOR_HISTORY_REQUEST: {
+            const existing = state.historyByKey[payload.detailKey];
             const entry = {
-                key: payload.key,
+                ...existing,
+                key: payload.detailKey,
                 detailKey: payload.detailKey,
                 address: payload.address,
                 chain: payload.chain,
-                unit: payload.unit,
                 requestId: payload.requestId,
-                status: 'loading' as const
+                status: 'loading' as const,
+                error: undefined,
+                targetFromTime: existing && typeof existing.targetFromTime === 'number'
+                    ? Math.min(existing.targetFromTime, payload.targetFromTime)
+                    : payload.targetFromTime
             };
-            const active = state.activeDelegatorKey === payload.detailKey &&
-                state.activeDelegatorHistoryUnit === payload.unit;
+            const active = state.activeDelegatorKey === payload.detailKey;
             return {
                 ...state,
-                historyByKey: { ...state.historyByKey, [payload.key]: entry },
-                delegatorHistoryIsLoading: active ? true : state.delegatorHistoryIsLoading,
+                historyByKey: { ...state.historyByKey, [payload.detailKey]: entry },
+                delegatorHistoryIsLoading: active ? !entry.data : state.delegatorHistoryIsLoading,
                 delegatorHistoryError: active ? undefined : state.delegatorHistoryError
             };
         }
         case types.DELEGATOR.DELEGATOR_HISTORY_SUCCESS: {
-            const pending = state.historyByKey[payload.key];
-            if (!pending || pending.key !== payload.key || pending.requestId !== payload.requestId) return state;
+            const pending = state.historyByKey[payload.detailKey];
+            if (!pending || pending.key !== payload.detailKey || pending.requestId !== payload.requestId) return state;
             const historyByKey = {
                 ...state.historyByKey,
-                [payload.key]: {
+                [payload.detailKey]: {
                     ...pending,
-                    status: 'loaded' as const,
+                    status: payload.complete === false ? 'loading' as const : 'loaded' as const,
                     data: payload.data,
                     error: undefined,
+                    coveredFromTime: pending.coveredFromTime === undefined
+                        ? payload.coveredFromTime
+                        : Math.min(pending.coveredFromTime, payload.coveredFromTime),
+                    latestBlock: payload.data.range.to_block,
+                    targetFromTime: payload.complete === false ? pending.targetFromTime : undefined,
                     loadedAt: payload.loadedAt === undefined ? Date.now() : payload.loadedAt
                 }
             };
             const next = { ...state, historyByKey };
-            const active = state.activeDelegatorKey === payload.detailKey &&
-                state.activeDelegatorHistoryUnit === payload.unit;
+            const active = state.activeDelegatorKey === payload.detailKey;
             if (!active) return next;
             return {
                 ...next,
-                selectedDelegator: selectedFor(next, payload.detailKey, payload.unit),
-                delegatorHistoryIsLoading: false,
+                selectedDelegator: selectedFor(next, payload.detailKey),
+                delegatorHistoryIsLoading: payload.complete === false,
                 delegatorHistoryError: undefined
             };
         }
         case types.DELEGATOR.DELEGATOR_HISTORY_FAILURE: {
-            const pending = state.historyByKey[payload.key];
-            if (!pending || pending.key !== payload.key || pending.requestId !== payload.requestId) return state;
+            const pending = state.historyByKey[payload.detailKey];
+            if (!pending || pending.key !== payload.detailKey || pending.requestId !== payload.requestId) return state;
             const historyByKey = {
                 ...state.historyByKey,
-                [payload.key]: { ...pending, status: 'error' as const, data: undefined, error: payload.error }
+                [payload.detailKey]: pending.data
+                    ? {
+                        ...pending,
+                        requestId: undefined,
+                        status: 'loaded' as const,
+                        error: payload.error,
+                        targetFromTime: undefined
+                    }
+                    : {
+                        ...pending,
+                        requestId: undefined,
+                        status: 'error' as const,
+                        data: undefined,
+                        error: payload.error,
+                        targetFromTime: undefined
+                    }
             };
-            const active = state.activeDelegatorKey === payload.detailKey &&
-                state.activeDelegatorHistoryUnit === payload.unit;
+            const active = state.activeDelegatorKey === payload.detailKey;
             return {
                 ...state,
                 historyByKey,
                 delegatorHistoryIsLoading: active ? false : state.delegatorHistoryIsLoading,
-                delegatorHistoryError: active ? payload.error : state.delegatorHistoryError
+                delegatorHistoryError: active ? (pending.data ? undefined : payload.error) : state.delegatorHistoryError
             };
         }
         case types.DELEGATOR.DELEGATOR_HISTORY_CANCELLED: {
-            const pending = state.historyByKey[payload.key];
-            if (!pending || pending.key !== payload.key || pending.requestId !== payload.requestId) return state;
+            const pending = state.historyByKey[payload.detailKey];
+            if (!pending || pending.key !== payload.detailKey || pending.requestId !== payload.requestId) return state;
             const historyByKey = {
                 ...state.historyByKey,
-                [payload.key]: {
+                [payload.detailKey]: {
                     ...pending,
                     requestId: undefined,
-                    status: 'idle' as const,
-                    data: undefined,
-                    error: undefined
+                    status: pending.data ? 'loaded' as const : 'idle' as const,
+                    error: undefined,
+                    targetFromTime: undefined
                 }
             };
-            const active = state.activeDelegatorKey === payload.detailKey &&
-                state.activeDelegatorHistoryUnit === payload.unit;
+            const active = state.activeDelegatorKey === payload.detailKey;
             return {
                 ...state,
                 historyByKey,

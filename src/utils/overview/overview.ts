@@ -105,6 +105,35 @@ export const groupDataset = (slices: PosOverviewSlice[], unit: ChartUnit) => {
     return result;
 };
 
+/**
+ * CommitteeEvents are state changes, not periodic snapshots. For every chart
+ * sample date, select the newest state known by the end of that date. This
+ * lets both daily and weekly charts inherit an event from any preceding day
+ * instead of requiring an event on the exact sample date.
+ */
+export const getSampledStateDataset = (slices: PosOverviewSlice[], dates: Date[]) => {
+    const ordered = slices.slice().sort((s1, s2) => s1.block_time - s2.block_time);
+    const now = moment().valueOf();
+    return dates
+        .slice()
+        .sort((d1, d2) => moment(d1).valueOf() - moment(d2).valueOf())
+        .map((date) => {
+            const cutoff = Math.min(moment(date).endOf('day').valueOf(), now);
+            let selected: PosOverviewSlice | undefined;
+            for (const slice of ordered) {
+                if (moment.unix(slice.block_time).valueOf() > cutoff) break;
+                selected = slice;
+            }
+            return selected
+                ? { date: moment(date).format(DATE_FORMAT), slice: selected }
+                : undefined;
+        })
+        .filter((item): item is {date: string; slice: PosOverviewSlice} => item !== undefined);
+};
+
+/** Backwards-compatible name retained for existing consumers and tests. */
+export const getDailyStateDataset = getSampledStateDataset;
+
 const createGroupedDataset = (mapped: any) => {
     const grouped = _(mapped)
         .groupBy((x) => x.date)

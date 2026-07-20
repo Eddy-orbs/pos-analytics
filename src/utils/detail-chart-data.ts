@@ -8,9 +8,13 @@ import {
 } from '@orbs-network/pos-analytics-lib';
 import { ChartColors, ChartUnit, ChartYaxis } from '../global/enums';
 import { ChartData, ChartDataset } from '../global/types';
-import { buildBucketedHistorySeries, HistoryPointLike } from './detail-history';
+import {
+    buildAnchoredWindowSeries,
+    getUtcBucketWindows,
+    HistoryPointLike
+} from './detail-history';
 
-export type DetailChartUnit = ChartUnit.WEEK | ChartUnit.MONTH;
+export type DetailChartUnit = ChartUnit.DAY | ChartUnit.WEEK | ChartUnit.MONTH;
 
 const DETAIL_CHART_BUCKET_COUNT = 10;
 
@@ -35,10 +39,10 @@ const getBoundaryValues = <T extends HistoryPointLike>(
     };
 };
 
-const buildDataset = <T extends HistoryPointLike>(
+const buildEventDataset = <T extends HistoryPointLike>(
     points: ReadonlyArray<T>,
-    unit: DetailChartUnit,
-    asOfTime: number,
+    fromTime: number,
+    toTime: number,
     valueSelector: (point: T) => number | null,
     currentValue: number | null,
     color: ChartColors,
@@ -46,21 +50,11 @@ const buildDataset = <T extends HistoryPointLike>(
 ): ChartDataset => {
     const boundary = getBoundaryValues(points, valueSelector);
     return {
-        data: buildBucketedHistorySeries(
+        data: buildAnchoredWindowSeries(
             points,
-            unit,
-            asOfTime,
+            { fromTime, toTime },
             valueSelector,
-            {
-                // A history response starts with a synthetic range anchor. Use
-                // it even when its resolved block lands just after a calendar
-                // boundary.
-                anchorValue: boundary.first,
-                // Contract state is authoritative for the open bucket, even
-                // if the last event precedes the current block.
-                currentValue
-            },
-            DETAIL_CHART_BUCKET_COUNT
+            { anchorValue: boundary.first, currentValue }
         ),
         color,
         yAxis
@@ -74,45 +68,26 @@ export const buildGuardianDetailChartData = (
     unit: DetailChartUnit
 ): ChartData => {
     const points = history.stake_slices;
+    const windows = getUtcBucketWindows(unit, current.block_time * 1000, DETAIL_CHART_BUCKET_COUNT);
+    const fromTime = Math.floor(windows[0].startMs / 1000);
     const datasets: ChartDataset[] = [
-        buildDataset(
+        buildEventDataset(
             points,
-            unit,
+            fromTime,
             current.block_time,
             (point: GuardianStake) => point.total_stake,
             current.stake_status.total_stake,
             ChartColors.TOTAL_STAKE,
-            ChartYaxis.Y1
-        ),
-        buildDataset(
-            points,
-            unit,
-            current.block_time,
-            (point: GuardianStake) => point.self_stake,
-            current.stake_status.self_stake,
-            ChartColors.SELF_STAKE,
-            ChartYaxis.Y1
-        ),
-        buildDataset(
-            points,
-            unit,
-            current.block_time,
-            (point: GuardianStake) => point.delegated_stake,
-            current.stake_status.delegated_stake,
-            ChartColors.DELEGATORS,
-            ChartYaxis.Y1
+            ChartYaxis.Y2
         )
     ];
 
-    // The current contracts do not expose an exact historical aggregate
-    // delegator count. Keep that series out of the chart unless the producer
-    // explicitly guarantees it.
     if (history.data_quality.n_delegates_available === true) {
         const delegateCount = getBoundaryValues(points, (point: GuardianStake) => point.n_delegates);
         datasets.push(
-            buildDataset(
+            buildEventDataset(
                 points,
-                unit,
+                fromTime,
                 current.block_time,
                 (point: GuardianStake) => point.n_delegates,
                 delegateCount.last === undefined ? null : delegateCount.last,
@@ -121,6 +96,18 @@ export const buildGuardianDetailChartData = (
             )
         );
     }
+
+    datasets.push(
+        buildEventDataset(
+            points,
+            fromTime,
+            current.block_time,
+            (point: GuardianStake) => point.self_stake,
+            current.stake_status.self_stake,
+            ChartColors.SELF_STAKE,
+            ChartYaxis.Y2
+        )
+    );
 
     return { datasets, unit };
 };
@@ -132,20 +119,22 @@ export const buildDelegatorDetailChartData = (
     unit: DetailChartUnit
 ): ChartData => {
     const points = history.stake_slices;
+    const windows = getUtcBucketWindows(unit, current.block_time * 1000, DETAIL_CHART_BUCKET_COUNT);
+    const fromTime = Math.floor(windows[0].startMs / 1000);
     return {
         datasets: [
-            buildDataset(
+            buildEventDataset(
                 points,
-                unit,
+                fromTime,
                 current.block_time,
                 (point: DelegatorStake) => point.stake,
                 current.total_stake,
                 ChartColors.TOTAL_STAKE,
                 ChartYaxis.Y1
             ),
-            buildDataset(
+            buildEventDataset(
                 points,
-                unit,
+                fromTime,
                 current.block_time,
                 (point: DelegatorStake) => point.cooldown,
                 current.cooldown_stake,

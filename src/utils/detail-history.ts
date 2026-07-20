@@ -1,7 +1,14 @@
 import { ChartUnit } from '../global/enums';
 import { ChartDatasetObject } from '../global/types';
+import {
+    DelegatorStake,
+    DelegatorStakeHistory,
+    GuardianStake,
+    GuardianStakeHistory
+} from '@orbs-network/pos-analytics-lib';
 
 const MILLISECONDS_PER_SECOND = 1000;
+const MILLISECONDS_PER_DAY = 24 * 60 * 60 * MILLISECONDS_PER_SECOND;
 const MILLISECONDS_PER_WEEK = 7 * 24 * 60 * 60 * MILLISECONDS_PER_SECOND;
 
 export interface HistoryPointLike {
@@ -102,6 +109,150 @@ export const mergeHistoryPoints = <T extends HistoryPointLike>(
     return merged.slice().sort(compareHistoryPoints);
 };
 
+const sameGuardianStake = (left: GuardianStake, right: GuardianStake): boolean =>
+    left.self_stake === right.self_stake &&
+    left.delegated_stake === right.delegated_stake &&
+    left.total_stake === right.total_stake &&
+    left.n_delegates === right.n_delegates;
+
+/**
+ * Appends an incremental Guardian response to one persisted raw range.
+ * The delta's synthetic start anchor is dropped when the previous cached
+ * endpoint already represents the same state.
+ */
+export const mergeGuardianStakeHistory = (
+    cached: GuardianStakeHistory,
+    delta: GuardianStakeHistory
+): GuardianStakeHistory => {
+    if (cached.address.toLowerCase() !== delta.address.toLowerCase()) {
+        throw new Error('Cannot merge Guardian histories for different addresses');
+    }
+    if (delta.range.from_block > cached.range.to_block + 1) {
+        throw new Error('Cannot merge Guardian histories with an uncovered block gap');
+    }
+
+    const cachedPoints = cached.stake_slices.slice().sort(compareHistoryPoints);
+    let deltaPoints = delta.stake_slices.slice().sort(compareHistoryPoints);
+    const cachedTail = cachedPoints[cachedPoints.length - 1];
+    const deltaAnchor = deltaPoints[0];
+    if (
+        cachedTail &&
+        deltaAnchor &&
+        !getTransactionHash(deltaAnchor) &&
+        getLogIndex(deltaAnchor) === undefined &&
+        sameGuardianStake(cachedTail, deltaAnchor)
+    ) {
+        deltaPoints = deltaPoints.slice(1);
+    }
+
+    const notes = Array.from(new Set([
+        ...(cached.data_quality.notes || []),
+        ...(delta.data_quality.notes || [])
+    ]));
+    const countsAvailable = cached.data_quality.n_delegates_available === true &&
+        delta.data_quality.n_delegates_available === true;
+    const eventSource = cached.data_quality.event_source === 'subgraph+rpc-logs' ||
+        delta.data_quality.event_source === 'subgraph+rpc-logs'
+        ? 'subgraph+rpc-logs' as const
+        : delta.data_quality.event_source || cached.data_quality.event_source;
+
+    return {
+        address: cached.address.toLowerCase(),
+        range: {
+            from_block: cached.range.from_block,
+            to_block: Math.max(cached.range.to_block, delta.range.to_block),
+            from_time: cached.range.from_time,
+            to_time: delta.range.to_time === undefined ? cached.range.to_time : delta.range.to_time
+        },
+        stake_slices: mergeHistoryPoints([cachedPoints, deltaPoints]),
+        data_quality: {
+            ...cached.data_quality,
+            exact: cached.data_quality.exact && delta.data_quality.exact,
+            stake_values_exact: cached.data_quality.stake_values_exact && delta.data_quality.stake_values_exact,
+            anchor_exact: cached.data_quality.anchor_exact,
+            anchor_source: cached.data_quality.anchor_source,
+            mode: 'event-reconstruction',
+            event_source: eventSource,
+            sampled_state: false,
+            n_delegates_available: countsAvailable,
+            n_delegates_source: countsAvailable
+                ? delta.data_quality.n_delegates_source || cached.data_quality.n_delegates_source
+                : 'unavailable',
+            n_delegates_checkpoint_block: countsAvailable
+                ? cached.data_quality.n_delegates_checkpoint_block || delta.data_quality.n_delegates_checkpoint_block
+                : undefined,
+            notes
+        }
+    };
+};
+
+const sameDelegatorStake = (left: DelegatorStake, right: DelegatorStake): boolean =>
+    left.stake === right.stake && left.cooldown === right.cooldown;
+
+/**
+ * Appends an incremental Delegator response to one persisted raw range.
+ * The first point of an incremental response is a synthetic pre-range
+ * anchor, so it is omitted when the cached endpoint already has that state.
+ */
+export const mergeDelegatorStakeHistory = (
+    cached: DelegatorStakeHistory,
+    delta: DelegatorStakeHistory
+): DelegatorStakeHistory => {
+    if (cached.address.toLowerCase() !== delta.address.toLowerCase()) {
+        throw new Error('Cannot merge Delegator histories for different addresses');
+    }
+    if (delta.range.from_block > cached.range.to_block + 1) {
+        throw new Error('Cannot merge Delegator histories with an uncovered block gap');
+    }
+
+    // The incremental query deliberately overlaps the mutable finality tail.
+    // Replace that entire suffix so logs removed by a reorg cannot survive in
+    // the persisted cache merely because their event identity disappeared.
+    const cachedPoints = cached.stake_slices
+        .filter((point) => point.block_number < delta.range.from_block)
+        .sort(compareHistoryPoints);
+    let deltaPoints = delta.stake_slices.slice().sort(compareHistoryPoints);
+    const cachedTail = cachedPoints[cachedPoints.length - 1];
+    const deltaAnchor = deltaPoints[0];
+    if (
+        cachedTail &&
+        deltaAnchor &&
+        !getTransactionHash(deltaAnchor) &&
+        getLogIndex(deltaAnchor) === undefined &&
+        sameDelegatorStake(cachedTail, deltaAnchor)
+    ) {
+        deltaPoints = deltaPoints.slice(1);
+    }
+
+    return {
+        address: cached.address.toLowerCase(),
+        range: {
+            from_block: cached.range.from_block,
+            to_block: Math.max(cached.range.to_block, delta.range.to_block),
+            from_time: cached.range.from_time,
+            to_time: delta.range.to_time === undefined ? cached.range.to_time : delta.range.to_time
+        },
+        stake_slices: mergeHistoryPoints([cachedPoints, deltaPoints]),
+        data_quality: {
+            ...cached.data_quality,
+            exact: cached.data_quality.exact && delta.data_quality.exact,
+            stake_values_exact: cached.data_quality.stake_values_exact && delta.data_quality.stake_values_exact,
+            anchor_exact: cached.data_quality.anchor_exact,
+            anchor_source: cached.data_quality.anchor_source,
+            mode: 'event-reconstruction',
+            event_source: cached.data_quality.event_source === 'subgraph+rpc-logs' ||
+                delta.data_quality.event_source === 'subgraph+rpc-logs'
+                ? 'subgraph+rpc-logs'
+                : delta.data_quality.event_source || cached.data_quality.event_source,
+            sampled_state: false,
+            notes: Array.from(new Set([
+                ...(cached.data_quality.notes || []),
+                ...(delta.data_quality.notes || [])
+            ]))
+        }
+    };
+};
+
 /** Filters by the exact inclusive timestamp window and returns a sorted copy. */
 export const filterHistoryWindow = <T extends HistoryPointLike>(
     points: ReadonlyArray<T>,
@@ -157,6 +308,11 @@ export const buildAnchoredWindowSeries = <T extends HistoryPointLike>(
     return series;
 };
 
+const startOfUtcDay = (timestampMs: number): number => {
+    const date = new Date(timestampMs);
+    return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+};
+
 const startOfUtcWeek = (timestampMs: number): number => {
     const date = new Date(timestampMs);
     const daysSinceMonday = (date.getUTCDay() + 6) % 7;
@@ -168,7 +324,8 @@ const startOfUtcMonth = (timestampMs: number): number => {
     return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1);
 };
 
-const shiftUtcPeriodStart = (periodStartMs: number, unit: ChartUnit.WEEK | ChartUnit.MONTH, amount: number): number => {
+const shiftUtcPeriodStart = (periodStartMs: number, unit: ChartUnit.DAY | ChartUnit.WEEK | ChartUnit.MONTH, amount: number): number => {
+    if (unit === ChartUnit.DAY) return periodStartMs + amount * MILLISECONDS_PER_DAY;
     if (unit === ChartUnit.WEEK) return periodStartMs + amount * MILLISECONDS_PER_WEEK;
 
     const date = new Date(periodStartMs);
@@ -181,18 +338,22 @@ const shiftUtcPeriodStart = (periodStartMs: number, unit: ChartUnit.WEEK | Chart
  * the next period starts.
  */
 export const getUtcBucketWindows = (
-    unit: ChartUnit.WEEK | ChartUnit.MONTH,
+    unit: ChartUnit.DAY | ChartUnit.WEEK | ChartUnit.MONTH,
     asOfMs: number,
     count: number = 10
 ): UtcBucketWindow[] => {
-    if (unit !== ChartUnit.WEEK && unit !== ChartUnit.MONTH) {
+    if (unit !== ChartUnit.DAY && unit !== ChartUnit.WEEK && unit !== ChartUnit.MONTH) {
         throw new RangeError(`Unsupported history bucket unit: ${unit}`);
     }
     if (!Number.isFinite(asOfMs) || !Number.isInteger(count) || count <= 0) {
         throw new RangeError(`Invalid UTC bucket arguments: ${asOfMs}, ${count}`);
     }
 
-    const currentPeriodStart = unit === ChartUnit.WEEK ? startOfUtcWeek(asOfMs) : startOfUtcMonth(asOfMs);
+    const currentPeriodStart = unit === ChartUnit.DAY
+        ? startOfUtcDay(asOfMs)
+        : unit === ChartUnit.WEEK
+            ? startOfUtcWeek(asOfMs)
+            : startOfUtcMonth(asOfMs);
     const firstPeriodStart = shiftUtcPeriodStart(currentPeriodStart, unit, -(count - 1));
 
     return Array.from({ length: count }, (_, index) => {
@@ -211,7 +372,7 @@ export const getUtcBucketWindows = (
  */
 export const bucketSeriesByUtcPeriod = (
     series: ReadonlyArray<ChartDatasetObject>,
-    unit: ChartUnit.WEEK | ChartUnit.MONTH,
+    unit: ChartUnit.DAY | ChartUnit.WEEK | ChartUnit.MONTH,
     asOfMs: number,
     count: number = 10
 ): ChartDatasetObject[] => {
@@ -232,7 +393,7 @@ export const bucketSeriesByUtcPeriod = (
 /** Convenience transformation used by guardian/delegator detail charts. */
 export const buildBucketedHistorySeries = <T extends HistoryPointLike>(
     points: ReadonlyArray<T>,
-    unit: ChartUnit.WEEK | ChartUnit.MONTH,
+    unit: ChartUnit.DAY | ChartUnit.WEEK | ChartUnit.MONTH,
     asOfTime: number,
     valueSelector: (point: T) => number | null,
     options: AnchoredSeriesOptions = {},

@@ -34,7 +34,7 @@ export const TimeRangeSelector = ({
   };
 
   return (
-    <div className="time-range-selector flex-start-center" role="group" aria-label="Chart period">
+    <div className="time-range-selector" role="group" aria-label="Chart period">
       {filterUnits(options, unitsToHide).map(
         (option: Option, index: number) => {
           const className =

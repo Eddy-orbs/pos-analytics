@@ -5,7 +5,8 @@ import { TimeRangeSelector } from 'components/date-format-picker/time-range-sele
 import { BigLoader } from 'components/loaders/big-loader';
 import { NoData } from 'components/no-data/no-data';
 import { ChartColors, ChartUnit } from 'global/enums';
-import { cancelDelegatorHistoryRequest, loadDelegatorHistory } from 'redux/actions/actions';
+import { loadDelegatorHistory } from 'redux/actions/actions';
+import { doesDetailRangeCover, getDetailHistoryStartTime } from 'redux/actions/detail-history';
 import { AppState } from 'redux/types/types';
 import { buildDelegatorDetailChartData } from 'utils/detail-chart-data';
 import { Chart } from './chart';
@@ -28,9 +29,16 @@ export const DelegatorStakeChart = () => {
     const { t } = useTranslation();
 
     const historyEntry = activeDelegatorKey
-        ? historyByKey[`${activeDelegatorKey}:${activeDelegatorHistoryUnit}`]
+        ? historyByKey[activeDelegatorKey]
         : undefined;
-    const history = historyEntry && historyEntry.status === 'loaded' ? historyEntry.data : undefined;
+    const requestedFromTime = delegatorCurrent
+        ? getDetailHistoryStartTime(activeDelegatorHistoryUnit, delegatorCurrent.block_time)
+        : undefined;
+    const rangeAvailable = requestedFromTime !== undefined && doesDetailRangeCover(
+        historyEntry,
+        requestedFromTime
+    );
+    const history = rangeAvailable && historyEntry ? historyEntry.data : undefined;
     const delegatorChartData = delegatorCurrent && history
         ? buildDelegatorDetailChartData(history, delegatorCurrent, activeDelegatorHistoryUnit)
         : undefined;
@@ -41,23 +49,17 @@ export const DelegatorStakeChart = () => {
         dispatch(loadDelegatorHistory(delegatorAddress, web3, activeDelegatorHistoryUnit));
     }, [activeDelegatorHistoryUnit, delegatorAddress, dispatch, web3]);
 
-    useEffect(() => {
-        return () => {
-            dispatch(cancelDelegatorHistoryRequest());
-        };
-    }, [dispatch]);
-
     const selectChartData = (unit: ChartUnit) => {
-        if (!delegatorCurrent || !web3 || (unit !== ChartUnit.WEEK && unit !== ChartUnit.MONTH)) return;
+        if (!delegatorCurrent || !web3 || (
+            unit !== ChartUnit.DAY && unit !== ChartUnit.WEEK && unit !== ChartUnit.MONTH
+        )) return;
         dispatch(loadDelegatorHistory(delegatorCurrent.address, web3, unit));
     };
     const noData = !delegatorIsLoading && !delegatorCurrent;
-    const historyLoading = !!delegatorCurrent && (
-        !historyEntry || historyEntry.status === 'idle' || historyEntry.status === 'loading'
-    );
-    const historyError = historyEntry && historyEntry.status === 'error'
+    const historyError = !rangeAvailable && historyEntry && historyEntry.error
         ? historyEntry.error || t('main.loadFailed')
         : undefined;
+    const historyLoading = !!delegatorCurrent && !rangeAvailable && !historyError;
     return (
         noData ? null : <div className="delegator-stake-chart">
             <header className="flex-between">
@@ -73,7 +75,6 @@ export const DelegatorStakeChart = () => {
                 <TimeRangeSelector
                     selected={delegatorChartData ? delegatorChartData.unit : activeDelegatorHistoryUnit}
                     selectCallBack={selectChartData}
-                    unitsToHide={[ChartUnit.DAY]}
                 />
             </header>
             <div className="delegator-stake-chart-stage">

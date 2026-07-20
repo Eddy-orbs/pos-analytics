@@ -5,7 +5,7 @@ import {
 } from '@orbs-network/pos-analytics-lib';
 import { ChartUnit } from '../../global/enums';
 import { ChartData } from '../../global/types';
-import { DetailCurrentEntry, DetailHistoryEntry, DetailHistoryUnit } from './detail-types';
+import { DetailCurrentEntry, DetailHistoryUnit, DetailRangeHistoryEntry } from './detail-types';
 
 export interface DelegatorState {
     selectedDelegator?: DelegatorInfo;
@@ -18,8 +18,10 @@ export interface DelegatorState {
     delegatorChartData?: ChartData;
     activeDelegatorKey?: string;
     activeDelegatorHistoryUnit: DetailHistoryUnit;
+    historyUnitByKey: { [key: string]: DetailHistoryUnit };
     currentByKey: { [key: string]: DetailCurrentEntry<DelegatorCurrent> };
-    historyByKey: { [key: string]: DetailHistoryEntry<DelegatorStakeHistory> };
+    /** Raw event history keyed only by chain + Delegator address. */
+    historyByKey: { [key: string]: DetailRangeHistoryEntry<DelegatorStakeHistory> };
 }
 
 export const DEFAULT_DELEGATOR_HISTORY_UNIT: DetailHistoryUnit = ChartUnit.WEEK;

@@ -13,6 +13,13 @@
     position: relative;
   }
 
+  .line-chart-canvas {
+    height: 100%;
+    margin: 0 42px;
+    min-width: 0;
+    position: relative;
+  }
+
   header {
     height: 70px;
     display: flex;
@@ -72,18 +79,26 @@
       font-size: 12px;
     }
     &-left {
-      left: 0px;
+      left: 6px;
       top: 50%;
       writing-mode: vertical-rl;
       transform: translate(0, -50%);
     }
 
     &-right {
-      right: 0px;
+      right: 6px;
       top: 50%;
       writing-mode: vertical-rl;
       transform: translate(0, -50%);
     }
+  }
+}
+
+@media (min-width: 1200px) {
+  .guardian-stake-chart {
+    // Keep the existing usable floor, then consume the remaining detail-page
+    // viewport instead of staying at a fixed 320px on tall desktop screens.
+    height: max(320px, calc(100vh - 478px));
   }
 }
 
@@ -94,8 +109,11 @@
     width: 100%;
     .line-chart{
       height: 240px;
-     width: calc(100% - 20px);
-     margin: auto;
+      width: 100%;
+      margin: auto;
+    }
+    .line-chart-canvas {
+      margin: 0 30px;
     }
     header {
       height: auto;

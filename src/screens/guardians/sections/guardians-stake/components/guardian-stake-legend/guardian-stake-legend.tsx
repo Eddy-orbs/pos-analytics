@@ -13,10 +13,20 @@ interface Legend {
 }
 
 export const GuardianStakeLegend = () => {
-    const { guardianCurrent, guardianIsLoading } = useSelector(
+    const {
+        guardianCurrent,
+        guardianIsLoading,
+        activeGuardianKey,
+        historyByKey
+    } = useSelector(
         (state: AppState) => state.guardians
     );
     const {t} = useTranslation()
+    const historyEntry = activeGuardianKey
+        ? historyByKey[activeGuardianKey]
+        : undefined;
+    const countAvailable = !historyEntry || !historyEntry.data ||
+        historyEntry.data.data_quality.n_delegates_available === true;
     const legends = [
         {
             name: t('guardians.totalDelegation'),
@@ -26,10 +36,10 @@ export const GuardianStakeLegend = () => {
             name: t('guardians.ownDelegation'),
             background: ChartColors.SELF_STAKE
         },
-        {
-            name: `${t('guardians.delegatedStake', 'Delegated stake')}`,
+        ...(countAvailable ? [{
+            name: `${t('guardians.delegatorsCount', 'Delegators count')}`,
             background: ChartColors.DELEGATORS
-        }
+        }] : [])
     ];
     const noData = !guardianIsLoading && !guardianCurrent
     return (

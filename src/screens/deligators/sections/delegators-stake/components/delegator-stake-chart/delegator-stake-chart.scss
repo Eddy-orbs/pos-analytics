@@ -71,9 +71,11 @@
 @media (max-width: 767px) {
     .delegator-stake-chart {
         min-height: 360px;
+        margin-left: 15px;
+        margin-right: 15px;
         margin-top: 18px;
         padding-top: 0;
-        width: 100%;
+        width: calc(100% - 30px);
         margin-bottom: 40px;
         .line-chart {
             height: 240px;

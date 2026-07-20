@@ -4,8 +4,11 @@ import {
     buildAnchoredWindowSeries,
     filterHistoryWindow,
     getUtcBucketWindows,
-    mergeHistoryPoints
+    mergeGuardianStakeHistory,
+    mergeHistoryPoints,
+    mergeDelegatorStakeHistory
 } from './detail-history';
+import { DelegatorStakeHistory, GuardianStakeHistory } from '@orbs-network/pos-analytics-lib';
 
 interface StakePoint {
     block_number: number;
@@ -39,6 +42,105 @@ describe('detail history utilities', () => {
         const replacement = { ...first, stake: 9, transactionHash: '0xabc' };
 
         expect(mergeHistoryPoints([[first], [replacement]])).toEqual([replacement]);
+    });
+
+    it('merges a Guardian reload delta without duplicating its synthetic anchor', () => {
+        const quality = {
+            exact: true,
+            stake_values_exact: true,
+            anchor_exact: true,
+            anchor_source: 'prior-event' as const,
+            mode: 'event-reconstruction' as const,
+            event_source: 'rpc-logs' as const,
+            n_delegates_available: true,
+            n_delegates_source: 'subgraph-checkpoint+range-events' as const
+        };
+        const cached: GuardianStakeHistory = {
+            address: '0xabc',
+            range: { from_block: 10, to_block: 100, from_time: 100, to_time: 1000 },
+            stake_slices: [
+                { block_number: 10, block_time: 100, self_stake: 10, delegated_stake: 20, total_stake: 30, n_delegates: 1 },
+                { block_number: 100, block_time: 1000, self_stake: 20, delegated_stake: 30, total_stake: 50, n_delegates: 2 }
+            ],
+            data_quality: quality
+        };
+        const delta: GuardianStakeHistory = {
+            address: '0xABC',
+            range: { from_block: 101, to_block: 110, from_time: 1010, to_time: 1100 },
+            stake_slices: [
+                { block_number: 101, block_time: 1010, self_stake: 20, delegated_stake: 30, total_stake: 50, n_delegates: 2 },
+                {
+                    block_number: 105,
+                    block_time: 1050,
+                    self_stake: 25,
+                    delegated_stake: 35,
+                    total_stake: 60,
+                    n_delegates: 3,
+                    transaction_hash: '0xevent',
+                    log_index: 0
+                },
+                { block_number: 110, block_time: 1100, self_stake: 25, delegated_stake: 35, total_stake: 60, n_delegates: 3 }
+            ],
+            data_quality: quality
+        };
+
+        const merged = mergeGuardianStakeHistory(cached, delta);
+
+        expect(merged.range).toEqual({ from_block: 10, to_block: 110, from_time: 100, to_time: 1100 });
+        expect(merged.stake_slices.map((point) => point.block_number)).toEqual([10, 100, 105, 110]);
+        expect(merged.data_quality.exact).toBe(true);
+        expect(merged.data_quality.n_delegates_available).toBe(true);
+    });
+
+    it('replaces the mutable Delegator finality tail during an overlapping refresh', () => {
+        const rpcQuality = {
+            exact: true,
+            stake_values_exact: true,
+            anchor_exact: true,
+            anchor_source: 'current-state-reverse' as const,
+            mode: 'event-reconstruction' as const,
+            event_source: 'rpc-logs' as const
+        };
+        const cached: DelegatorStakeHistory = {
+            address: '0xabc',
+            range: { from_block: 10, to_block: 100, from_time: 100, to_time: 1000 },
+            stake_slices: [
+                { block_number: 10, block_time: 100, stake: 1, cooldown: 0 },
+                {
+                    block_number: 90,
+                    block_time: 900,
+                    stake: 9,
+                    cooldown: 0,
+                    transaction_hash: '0xorphaned',
+                    log_index: 1
+                },
+                { block_number: 100, block_time: 1000, stake: 9, cooldown: 0 }
+            ],
+            data_quality: { ...rpcQuality, event_source: 'subgraph+rpc-logs' }
+        };
+        const delta: DelegatorStakeHistory = {
+            address: '0xABC',
+            range: { from_block: 80, to_block: 105, from_time: 800, to_time: 1050 },
+            stake_slices: [
+                { block_number: 80, block_time: 800, stake: 1, cooldown: 0 },
+                {
+                    block_number: 95,
+                    block_time: 950,
+                    stake: 5,
+                    cooldown: 0,
+                    transaction_hash: '0xcanonical',
+                    log_index: 0
+                },
+                { block_number: 105, block_time: 1050, stake: 5, cooldown: 0 }
+            ],
+            data_quality: rpcQuality
+        };
+
+        const merged = mergeDelegatorStakeHistory(cached, delta);
+
+        expect(merged.stake_slices.map((point) => point.block_number)).toEqual([10, 95, 105]);
+        expect(merged.stake_slices.some((point) => point.transaction_hash === '0xorphaned')).toBe(false);
+        expect(merged.data_quality.event_source).toBe('subgraph+rpc-logs');
     });
 
     it('filters an exact inclusive time window without changing its input', () => {
@@ -87,6 +189,19 @@ describe('detail history utilities', () => {
                 999
             ]);
         });
+    });
+
+    it('creates ten UTC-day buckets ending at the current instant', () => {
+        const asOfMs = Date.UTC(2026, 6, 15, 12, 0, 0);
+        const windows = getUtcBucketWindows(ChartUnit.DAY, asOfMs, 10);
+        const output = bucketSeriesByUtcPeriod([{ x: windows[0].startMs, y: 7 }], ChartUnit.DAY, asOfMs, 10);
+
+        expect(windows[0]).toEqual({
+            startMs: Date.UTC(2026, 6, 6),
+            endMs: Date.UTC(2026, 6, 7) - 1
+        });
+        expect(output).toHaveLength(10);
+        expect(output[9]).toEqual({ x: asOfMs, y: 7 });
     });
 
     it('creates ten calendar-month UTC buckets ending at the current instant', () => {

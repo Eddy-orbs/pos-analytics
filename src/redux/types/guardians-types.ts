@@ -2,12 +2,13 @@ import {
     Guardian,
     GuardianCurrent,
     GuardianDelegatorPageItem,
+    GuardianDelegatorsCacheSnapshot,
     GuardianInfo,
     GuardianStakeHistory
 } from '@orbs-network/pos-analytics-lib';
 import { ChartUnit } from '../../global/enums';
 import { ChartData } from '../../global/types';
-import { DetailCurrentEntry, DetailHistoryEntry, DetailHistoryUnit } from './detail-types';
+import { DetailCurrentEntry, DetailHistoryUnit, DetailRangeHistoryEntry } from './detail-types';
 import { CHAINS } from '../../types';
 
 export interface GuardianDelegatorsPageEntry {
@@ -20,6 +21,7 @@ export interface GuardianDelegatorsPageEntry {
     total: number;
     nextCursor?: string;
     asOfBlock?: number;
+    cacheSnapshot?: GuardianDelegatorsCacheSnapshot;
     error?: string;
     loadedAt?: number;
 }
@@ -37,8 +39,10 @@ export interface GuardiansState {
     guardiansColors?: { [id: string]: string };
     activeGuardianKey?: string;
     activeGuardianHistoryUnit: DetailHistoryUnit;
+    historyUnitByKey: { [key: string]: DetailHistoryUnit };
     currentByKey: { [key: string]: DetailCurrentEntry<GuardianCurrent> };
-    historyByKey: { [key: string]: DetailHistoryEntry<GuardianStakeHistory> };
+    /** Raw event history keyed only by chain + Guardian address. */
+    historyByKey: { [key: string]: DetailRangeHistoryEntry<GuardianStakeHistory> };
     delegatorsByKey: { [key: string]: GuardianDelegatorsPageEntry };
 }
 

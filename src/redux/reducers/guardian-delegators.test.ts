@@ -3,11 +3,13 @@ import {
     GuardianDelegatorsPage
 } from '@orbs-network/pos-analytics-lib';
 import { api } from '../../services/api';
+import { clearGuardianDetailCache } from '../../services/cache/guardian-detail-cache';
 import { CHAINS } from '../../types';
 import {
     cancelGuardianDelegatorsRequest,
     getGuardianDelegatorsKey,
-    loadGuardianDelegatorsPage
+    loadGuardianDelegatorsPage,
+    resetGuardianReloadRefreshTracking
 } from '../actions/guardians-actions';
 import { GUARDIAN_DELEGATORS_CACHE_TTL_MS } from '../actions/detail-history';
 import { types } from '../types/types';
@@ -25,16 +27,37 @@ const firstItem: GuardianDelegatorPageItem = {
 const page = (
     items: GuardianDelegatorPageItem[],
     nextCursor?: string,
-    total: number = items.length
+    total: number = items.length,
+    asOfBlock: number = 200
 ): GuardianDelegatorsPage => ({
     guardian_address: guardian,
     items,
     total,
-    as_of_block: 200,
+    as_of_block: asOfBlock,
     page_size: 50,
     next_cursor: nextCursor,
     cache_status: 'snapshot-hit',
     cache_source: 'rpc-fallback',
+    cache_snapshot: {
+        guardian_address: guardian,
+        chain_id: 1,
+        as_of_block: asOfBlock,
+        finality_blocks: 64,
+        cache_source: 'rpc-fallback',
+        items: Array.from({ length: total }, (_unused, index) => {
+            const item = items[index] || {
+                ...firstItem,
+                address: `0xcache${index}`,
+                stake: Math.max(1, total - index)
+            };
+            return {
+                address: item.address,
+                stake: item.stake,
+                last_change_block: Math.min(item.last_change_block, asOfBlock),
+                last_change_time: item.last_change_time
+            };
+        })
+    },
     data_quality: {
         active_set_exact: true,
         stake_values_exact: true,
@@ -48,6 +71,11 @@ const page = (
 });
 
 describe('Guardian delegator page cache', () => {
+    beforeEach(() => {
+        clearGuardianDetailCache();
+        resetGuardianReloadRefreshTracking();
+    });
+
     it('appends cursor pages and deduplicates addresses', () => {
         const key = getGuardianDelegatorsKey(CHAINS.ETHEREUM, guardian);
         let state = guardiansReducer(undefined, { type: '@@init' });
@@ -201,6 +229,103 @@ describe('Guardian delegator page cache', () => {
         } finally {
             now.mockRestore();
             api.getGuardianDelegatorsPageApi = original;
+        }
+    });
+
+    it('restores a persisted page after Redux reset without another query while fresh', async () => {
+        let state = guardiansReducer(undefined, { type: '@@init' });
+        const appState = () => ({
+            main: { chain: CHAINS.ETHEREUM, web3: {} },
+            guardians: state
+        } as any);
+        const dispatch: any = async (action: any): Promise<any> => {
+            if (typeof action === 'function') return action(dispatch, appState);
+            state = guardiansReducer(state, action);
+            return action;
+        };
+        const original = api.getGuardianDelegatorsPageApi;
+        let calls = 0;
+        api.getGuardianDelegatorsPageApi = async () => {
+            calls += 1;
+            return page([firstItem], 'next', 2);
+        };
+
+        try {
+            await dispatch(loadGuardianDelegatorsPage(guardian, {}));
+            state = guardiansReducer(undefined, { type: '@@init' });
+            await dispatch(loadGuardianDelegatorsPage(guardian, {}));
+
+            const key = getGuardianDelegatorsKey(CHAINS.ETHEREUM, guardian);
+            expect(calls).toBe(1);
+            expect(state.delegatorsByKey[key]).toMatchObject({
+                status: 'loaded',
+                items: [firstItem],
+                total: 2,
+                nextCursor: 'next',
+                asOfBlock: 200
+            });
+        } finally {
+            api.getGuardianDelegatorsPageApi = original;
+        }
+    });
+
+    it('refreshes a persisted page from its cached snapshot after browser reload', async () => {
+        let state = guardiansReducer(undefined, { type: '@@init' });
+        const appState = () => ({
+            main: { chain: CHAINS.ETHEREUM, web3: {} },
+            guardians: state
+        } as any);
+        const dispatch: any = async (action: any): Promise<any> => {
+            if (typeof action === 'function') return action(dispatch, appState);
+            state = guardiansReducer(state, action);
+            return action;
+        };
+        const originalApi = api.getGuardianDelegatorsPageApi;
+        const originalPath = window.location.pathname;
+        const navigationDescriptor = Object.getOwnPropertyDescriptor(window.performance, 'getEntriesByType');
+        let calls = 0;
+        let receivedSnapshot: any;
+        api.getGuardianDelegatorsPageApi = async (_address, _web3, _cursor, _signal, cachedSnapshot) => {
+            calls += 1;
+            receivedSnapshot = cachedSnapshot;
+            return calls === 1
+                ? page([firstItem], undefined, 1, 200)
+                : page([{ ...firstItem, stake: 120, last_change_block: 205 }], undefined, 1, 210);
+        };
+
+        try {
+            await dispatch(loadGuardianDelegatorsPage(guardian, {}));
+            state = guardiansReducer(undefined, { type: '@@init' });
+            window.history.replaceState({}, '', `/ethereum/guardians/delegators/${guardian}`);
+            Object.defineProperty(window.performance, 'getEntriesByType', {
+                configurable: true,
+                value: (entryType: string) => entryType === 'navigation' ? [{ type: 'reload' }] : []
+            });
+
+            await dispatch(loadGuardianDelegatorsPage(guardian, {}));
+
+            const key = getGuardianDelegatorsKey(CHAINS.ETHEREUM, guardian);
+            expect(calls).toBe(2);
+            expect(receivedSnapshot).toMatchObject({
+                guardian_address: guardian,
+                chain_id: 1,
+                as_of_block: 200
+            });
+            expect(state.delegatorsByKey[key]).toMatchObject({
+                status: 'loaded',
+                asOfBlock: 210,
+                total: 1
+            });
+            expect(state.delegatorsByKey[key].items[0].stake).toBe(120);
+        } finally {
+            api.getGuardianDelegatorsPageApi = originalApi;
+            window.history.replaceState({}, '', originalPath);
+            if (navigationDescriptor) {
+                Object.defineProperty(window.performance, 'getEntriesByType', navigationDescriptor);
+            } else {
+                delete (window.performance as any).getEntriesByType;
+            }
+            resetGuardianReloadRefreshTracking();
         }
     });
 

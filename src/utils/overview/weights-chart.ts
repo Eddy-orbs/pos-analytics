@@ -4,7 +4,7 @@ import { findIndexInArray } from 'utils/array';
 import { ChartUnit } from '../../global/enums';
 import { OVERVIEW_CHART_LIMIT } from '../../global/variables';
 import { generateWeeks, generateDays } from '../dates';
-import { createGuardianDatasets, getLastSlice, groupDataset } from './overview';
+import { createGuardianDatasets, getLastSlice, getSampledStateDataset } from './overview';
 
 export const generateDataset = (arr: any) => {
     const result = Object.keys(arr).map((key) => {
@@ -24,10 +24,10 @@ const calcTotalWeight = (data: PosOverviewData[]) => {
 };
 const insertGuardiansByDate = (
     slices: PosOverviewSlice[],
-    unit: ChartUnit,
-    guardianDatasets: { [id: string]: OverviewGuardianDataset }
+    guardianDatasets: { [id: string]: OverviewGuardianDataset },
+    dates: Date[]
 ) => {
-    const grouped = groupDataset(slices, unit);
+    const grouped = getSampledStateDataset(slices, dates);
     const totalObject: any = {};
     grouped.forEach(({ slice, date }: any) => {
         const { data, total_weight, total_effective_stake } = slice;
@@ -66,7 +66,7 @@ export const getOverviewChartData = (
     if (!lastSlice) return;
     const sortedGuardians = lastSlice.data.sort((s1, s2) => s2.weight - s1.weight);
     const guardianDatasets = createGuardianDatasets(sortedGuardians, dates, unit, guardiansColors);
-    insertGuardiansByDate(slices, unit, guardianDatasets);
+    insertGuardiansByDate(slices, guardianDatasets, dates);
     const obj = {
         data: generateDataset(guardianDatasets),
         unit,

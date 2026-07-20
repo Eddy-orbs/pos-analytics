@@ -5,7 +5,8 @@ import { TimeRangeSelector } from 'components/date-format-picker/time-range-sele
 import { BigLoader } from 'components/loaders/big-loader';
 import { NoData } from 'components/no-data/no-data';
 import { ChartUnit } from 'global/enums';
-import { cancelGuardianHistoryRequest, loadGuardianHistory } from 'redux/actions/actions';
+import { loadGuardianHistory } from 'redux/actions/actions';
+import { doesDetailRangeCover, getDetailHistoryStartTime } from 'redux/actions/detail-history';
 import { AppState } from 'redux/types/types';
 import { buildGuardianDetailChartData } from 'utils/detail-chart-data';
 import { Chart } from './chart';
@@ -26,9 +27,16 @@ export const GuardianStakeChart = () => {
     const { t } = useTranslation();
 
     const historyEntry = activeGuardianKey
-        ? historyByKey[`${activeGuardianKey}:${activeGuardianHistoryUnit}`]
+        ? historyByKey[activeGuardianKey]
         : undefined;
-    const history = historyEntry && historyEntry.status === 'loaded' ? historyEntry.data : undefined;
+    const requestedFromTime = guardianCurrent
+        ? getDetailHistoryStartTime(activeGuardianHistoryUnit, guardianCurrent.block_time)
+        : undefined;
+    const rangeAvailable = requestedFromTime !== undefined && doesDetailRangeCover(
+        historyEntry,
+        requestedFromTime
+    );
+    const history = rangeAvailable && historyEntry ? historyEntry.data : undefined;
     const guardianChartData = guardianCurrent && history
         ? buildGuardianDetailChartData(history, guardianCurrent, activeGuardianHistoryUnit)
         : undefined;
@@ -39,23 +47,17 @@ export const GuardianStakeChart = () => {
         dispatch(loadGuardianHistory(guardianAddress, web3, activeGuardianHistoryUnit));
     }, [activeGuardianHistoryUnit, dispatch, guardianAddress, web3]);
 
-    useEffect(() => {
-        return () => {
-            dispatch(cancelGuardianHistoryRequest());
-        };
-    }, [dispatch]);
-
     const selectChartData = (unit: ChartUnit) => {
-        if (!guardianCurrent || !web3 || (unit !== ChartUnit.WEEK && unit !== ChartUnit.MONTH)) return;
+        if (!guardianCurrent || !web3 || (
+            unit !== ChartUnit.DAY && unit !== ChartUnit.WEEK && unit !== ChartUnit.MONTH
+        )) return;
         dispatch(loadGuardianHistory(guardianCurrent.address, web3, unit));
     };
     const noData = !guardianIsLoading && !guardianCurrent;
-    const historyLoading = !!guardianCurrent && (
-        !historyEntry || historyEntry.status === 'idle' || historyEntry.status === 'loading'
-    );
-    const historyError = historyEntry && historyEntry.status === 'error'
+    const historyError = !rangeAvailable && historyEntry && historyEntry.error
         ? historyEntry.error || t('main.loadFailed')
         : undefined;
+    const historyLoading = !!guardianCurrent && !rangeAvailable && !historyError;
     return noData ? null : (
         <div className="guardian-stake-chart">
             <header>
@@ -63,7 +65,6 @@ export const GuardianStakeChart = () => {
                 <TimeRangeSelector
                     selected={guardianChartData ? guardianChartData.unit : activeGuardianHistoryUnit}
                     selectCallBack={selectChartData}
-                    unitsToHide={[ChartUnit.DAY]}
                 />
             </header>
             <div className="guardian-stake-chart-stage">

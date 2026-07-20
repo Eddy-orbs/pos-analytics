@@ -4,6 +4,23 @@ import ethLogo from 'assets/images/chain/ethereum-menu-logo.svg'
 import polygonLogo from 'assets/images/chain/polygon-menu-logo.svg'
 import { ETHERSCAN_BLOCK_ADDRESS, POLYGONSCAN_BLOCK_ADDRESS } from 'keys/keys';
 
+export const DEFAULT_SUBGRAPH_BASE_URL = 'https://hub.orbs.network';
+
+const configuredSubgraphBaseUrl = (process.env.REACT_APP_SUBGRAPH_BASE_URL || '').trim();
+
+/**
+ * Shared Subgraph host for Guardian and Delegator history queries. Keeping the
+ * production default here means changing one environment variable is enough
+ * to move both paths to the local indexer later.
+ */
+export const subgraphBaseUrl = (
+    configuredSubgraphBaseUrl || DEFAULT_SUBGRAPH_BASE_URL
+).replace(/\/+$/, '');
+
+/** The legacy Orbs endpoint does not expose the Delegator stake-event index. */
+export const indexedDelegatorHistoryEnabled =
+    subgraphBaseUrl.toLowerCase() !== DEFAULT_SUBGRAPH_BASE_URL.toLowerCase();
+
 
 const chains: { [key in CHAINS]: IChain} = {
     [CHAINS.ETHEREUM]: {

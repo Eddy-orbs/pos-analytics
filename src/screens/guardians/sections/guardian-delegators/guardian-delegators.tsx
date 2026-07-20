@@ -12,7 +12,6 @@ import './guardian-delegators.scss';
 import { GuardianDelegatorElement } from './components/guardian-delegator/guardian-delegator';
 import { useTranslation } from 'react-i18next';
 import { ListMaterial } from 'components/list/list-material';
-import { useIsMobileViewport } from 'hooks/useViewport';
 
 export const GuardianDelegators = () => {
   const dispatch = useDispatch();
@@ -24,8 +23,7 @@ export const GuardianDelegators = () => {
     (state: AppState) => state.guardians
   );
   const { chain, web3 } = useSelector((state: AppState) => state.main);
-  const { t } = useTranslation();
-  const isMobile = useIsMobileViewport();
+  const { t, i18n } = useTranslation();
   const address = guardianCurrent && guardianCurrent.address;
   const key = address ? getGuardianDelegatorsKey(chain, address) : undefined;
   const entry = key ? delegatorsByKey[key] : undefined;
@@ -38,8 +36,15 @@ export const GuardianDelegators = () => {
     };
   }, [address, chain, dispatch, key, web3]);
 
+  const total = entry && entry.asOfBlock !== undefined ? entry.total : '…';
+  const language = (i18n.language || 'en-US').toLowerCase();
+  const delegatorAddressTitle = language.indexOf('ko') === 0
+    ? `델리게이터 주소 (총 ${total} 개)`
+    : language.indexOf('ja') === 0
+      ? `デリゲーターアドレス（合計: ${total}件）`
+      : `Delegator's address (Total: ${total})`;
   const titles = [
-    isMobile ? t('main.address') : t('guardians.delegatorsAddress'),
+    delegatorAddressTitle,
     t('guardians.stake'),
     t('guardians.nonStakedBalance'),
   ];

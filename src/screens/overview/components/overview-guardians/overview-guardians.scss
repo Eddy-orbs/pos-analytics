@@ -8,6 +8,8 @@
         position: relative;
         width: 300px;
         margin-left: auto;
+        min-height: 0;
+        overflow: hidden;
         header{
             color:$light-gray; 
             font-size:17px;
@@ -17,8 +19,8 @@
         }
         height: 100%;
         &-list {
-          
             height: calc(100% - 30px);
+            min-height: 0;
             overflow-y: auto;
             li {
                 height: 30px;
@@ -85,8 +87,15 @@
 @media (max-width: 767px){
         .overview{
             &-guardians{
+              height: auto;
+              max-height: none;
               width: 100%;
               margin-bottom: 60px;
+              overflow: visible;
+
+              &-list {
+                height: auto;
+              }
             }
         }
 }

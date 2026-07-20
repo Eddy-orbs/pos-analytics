@@ -13,6 +13,10 @@
         .guardian-delegators-table {
             min-height: 360px;
 
+            .list-titles {
+                text-transform: none;
+            }
+
             th,
             td {
                 &:nth-child(1) {

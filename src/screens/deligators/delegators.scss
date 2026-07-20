@@ -1,6 +1,9 @@
 @import '../../scss/colors/colors.scss';
 
 .delegators {
+  // The shared desktop screen padding extends this page below the viewport by
+  // a few pixels even when all of its content fits.
+  padding-bottom: 0;
   padding-top: 55px;
   position: relative;
   .screen-section {
@@ -19,6 +22,10 @@
     max-width: 500px;
     width: min(500px, 100%);
   }
+}
+
+.delegators.screen {
+  padding-bottom: 0;
 }
 
 @media (min-width: 768px) and (max-width: 1199px) {

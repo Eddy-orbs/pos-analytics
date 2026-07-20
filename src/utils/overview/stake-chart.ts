@@ -3,7 +3,7 @@ import { GuardiansChartDatasetObject, OverviewGuardianDataset } from 'global/typ
 import { ChartUnit } from '../../global/enums';
 import {  OVERVIEW_CHART_LIMIT } from '../../global/variables';
 import {  generateDays, generateWeeks } from '../dates';
-import { createGuardianDatasets, getLastSlice, groupDataset } from './overview';
+import { createGuardianDatasets, getLastSlice, getSampledStateDataset } from './overview';
 import { findIndexInArray } from 'utils/array';
 import _ from 'lodash';
 export const generateDataset = (arr: any) => {
@@ -16,11 +16,11 @@ export const generateDataset = (arr: any) => {
 
 const insertGuardiansByDate = (
     slices: PosOverviewSlice[],
-    unit: ChartUnit,
-    guardianDatasets: { [id: string]: OverviewGuardianDataset }
+    guardianDatasets: { [id: string]: OverviewGuardianDataset },
+    dates: Date[]
 ) => {
     const totalObject: any = {};
-    const grouped = groupDataset(slices, unit);
+    const grouped = getSampledStateDataset(slices, dates);
     grouped.forEach(({ slice, date }: any) => {
     
         const { data, total_effective_stake } = slice;
@@ -52,7 +52,7 @@ export const getOverviewChartData = (
     if (!lastSlice) return;
     const sortedGuardians = lastSlice.data.sort((s1, s2) => s2.effective_stake - s1.effective_stake);
     const guardianDatasets = createGuardianDatasets(sortedGuardians, dates, unit, guardiansColors);
-    insertGuardiansByDate(slices, unit, guardianDatasets);
+    insertGuardiansByDate(slices, guardianDatasets, dates);
     const obj = {
         data: generateDataset(guardianDatasets),
         unit,
