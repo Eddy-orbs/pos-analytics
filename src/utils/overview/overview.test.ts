@@ -1,6 +1,7 @@
 import moment from 'moment';
 import { PosOverviewSlice } from '@orbs-network/pos-analytics-lib';
-import { getDailyStateDataset, getSampledStateDataset } from './overview';
+import { getDailyStateDataset, getMinDateByUnitOverview, getSampledStateDataset } from './overview';
+import { ChartUnit } from '../../global/enums';
 
 const slice = (date: Date, total: number): PosOverviewSlice => ({
     block_number: total,
@@ -54,5 +55,23 @@ describe('Overview weekly committee state', () => {
             ['06/07/2026', 20],
             ['13/07/2026', 30]
         ]);
+    });
+});
+
+describe('Overview chart range', () => {
+    beforeEach(() => {
+        jest.spyOn(Date, 'now').mockReturnValue(new Date(2026, 6, 20, 20, 0).valueOf());
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
+    it('includes the complete first weekly sample and its date tick', () => {
+        expect(getMinDateByUnitOverview(ChartUnit.WEEK)).toEqual(new Date(2026, 4, 25));
+    });
+
+    it('includes the complete first daily sample and its date tick', () => {
+        expect(getMinDateByUnitOverview(ChartUnit.DAY)).toEqual(new Date(2026, 6, 12));
     });
 });
