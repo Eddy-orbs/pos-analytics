@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Bar } from 'react-chartjs-2';
-import { Guardian } from '@orbs-network/pos-analytics-lib';
+import { Guardian } from 'pos-analytics-graph';
 import { useTranslation } from 'react-i18next';
 import { useHistory } from 'react-router-dom';
 import { GuardiansChartDatasetObject } from 'global/types';

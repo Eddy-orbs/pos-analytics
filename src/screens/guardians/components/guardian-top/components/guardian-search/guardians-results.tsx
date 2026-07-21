@@ -1,4 +1,4 @@
-import { Guardian } from '@orbs-network/pos-analytics-lib';
+import { Guardian } from 'pos-analytics-graph';
 import React from 'react';
 import { filterGuardians } from 'utils/guardians';
 

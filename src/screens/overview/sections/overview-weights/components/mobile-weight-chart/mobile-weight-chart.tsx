@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Doughnut } from 'react-chartjs-2';
-import { PosOverviewData, PosOverviewSlice } from '@orbs-network/pos-analytics-lib';
+import { PosOverviewData, PosOverviewSlice } from 'pos-analytics-graph';
 import { generateDoghnutDataset, getDoughnutWeightChartData } from 'utils/overview/doghnut-chart';
 import { useSelector } from 'react-redux';
 import { AppState } from 'redux/types/types';

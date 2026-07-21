@@ -1,4 +1,4 @@
-import { PosOverview, PosOverviewSlice, PosOverviewData } from '@orbs-network/pos-analytics-lib';
+import { PosOverview, PosOverviewSlice, PosOverviewData } from 'pos-analytics-graph';
 import { GRAPH_DAY_FORMAT } from 'global/variables';
 import moment, { Moment } from 'moment';
 

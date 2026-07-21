@@ -5,7 +5,7 @@ import {
     getOverview,
     getWeb3,
     getWeb3Polygon
-} from '@orbs-network/pos-analytics-lib';
+} from 'pos-analytics-graph';
 import axios from 'axios';
 import { SupportedLanguage } from '../../global/types';
 import { LOCAIZE_API, LOCAIZE_PROJECT_ID } from '../../global/variables';

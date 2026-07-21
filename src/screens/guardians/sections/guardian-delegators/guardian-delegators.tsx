@@ -1,5 +1,5 @@
 import React from 'react';
-import { GuardianDelegator } from '@orbs-network/pos-analytics-lib';
+import { GuardianDelegator } from 'pos-analytics-graph';
 import { useSelector } from 'react-redux';
 import { AppState } from 'redux/types/types';
 import { NoData } from 'components/no-data/no-data';

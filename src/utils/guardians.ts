@@ -2,7 +2,7 @@ import { TFunction } from 'i18next';
 import { ChartData, GuardiansChartDataset, GuardiansChartDatasets, MenuOption } from '../global/types';
 import { routes } from '../routes/routes';
 import { ChartColors, ChartUnit, ChartYaxis, GuardianActionsTypes, GuardiansSections } from '../global/enums';
-import { Guardian, GuardianAction, GuardianInfo, GuardianStake } from '@orbs-network/pos-analytics-lib';
+import { Guardian, GuardianAction, GuardianInfo, GuardianStake } from 'pos-analytics-graph';
 import { generateDays, generateMonths, generateWeeks } from './dates';
 import { STACK_GRAPH_MONTHS_LIMIT } from '../global/variables';
 import moment from 'moment';

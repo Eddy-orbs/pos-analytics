@@ -1,4 +1,4 @@
-import { Guardian, GuardianInfo } from '@orbs-network/pos-analytics-lib';
+import { Guardian, GuardianInfo } from 'pos-analytics-graph';
 import { ChartData } from '../../global/types';
 
 export interface GuardiansState {

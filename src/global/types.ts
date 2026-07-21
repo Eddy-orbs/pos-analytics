@@ -1,4 +1,4 @@
-import { Delegator, DelegatorInfo, Guardian, GuardianInfo } from '@orbs-network/pos-analytics-lib';
+import { Delegator, DelegatorInfo, Guardian, GuardianInfo } from 'pos-analytics-graph';
 import {
     ChartColors,
     ChartUnit,

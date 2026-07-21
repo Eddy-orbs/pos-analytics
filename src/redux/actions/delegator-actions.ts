@@ -1,4 +1,4 @@
-import {  DelegatorInfo } from '@orbs-network/pos-analytics-lib';
+import {  DelegatorInfo } from 'pos-analytics-graph';
 import { Dispatch } from 'redux';
 import { BlockRef } from 'redux/types/main-types';
 import { ChartData } from '../../global/types';

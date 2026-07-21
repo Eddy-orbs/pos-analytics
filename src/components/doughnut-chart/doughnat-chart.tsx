@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Doughnut } from 'react-chartjs-2';
-import { PosOverview, PosOverviewData } from '@orbs-network/pos-analytics-lib';
+import { PosOverview, PosOverviewData } from 'pos-analytics-graph';
 import { OverviewChartType } from '../../global/enums';
 import './doughnat-chart.scss';
 import { getDoughnutChartData } from 'utils/overview/doghnut-chart';
