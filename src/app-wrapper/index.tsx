@@ -6,21 +6,22 @@ import { setInitialConfiguration } from '../redux/actions/global-actions';
 import { AppLoader } from '../components/app-loader/app-loader';
 import { chains } from '../config';
 import { CHAINS } from '../types';
+import { useTranslation } from 'react-i18next';
+import { getAppConnectionMessages } from './app-status-messages';
 
 const chain = getRouterBaseName();
 
 function AppWrapper() {
     const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
     const [retrySequence, setRetrySequence] = useState(0);
-    const [error, setError] = useState<string>();
-
     const dispatch = useDispatch();
+    const { i18n } = useTranslation();
+    const connectionMessages = getAppConnectionMessages(i18n.language);
 
     useEffect(() => {
         let mounted = true;
         const onLoad = async () => {
             setStatus('loading');
-            setError(undefined);
             const chainConfig = chains[chain] || chains[CHAINS.ETHEREUM];
             const { getWeb3 } = chainConfig;
             try {
@@ -31,7 +32,6 @@ function AppWrapper() {
                 setStatus('ready');
             } catch (_loadError) {
                 if (!mounted) return;
-                setError('Unable to connect to the RPC provider');
                 setStatus('error');
             }
         };
@@ -44,9 +44,12 @@ function AppWrapper() {
     if (status === 'ready') return <App />;
     if (status === 'error') {
         return (
-            <div className="app-loader app-loader-error">
-                <h5>{error || 'Unable to connect to the RPC provider'}</h5>
-                <button type="button" onClick={() => setRetrySequence((value) => value + 1)}>Retry</button>
+            <div className="app-loader app-loader-error" role="alert">
+                <h5>{connectionMessages.title}</h5>
+                <p>{connectionMessages.description}</p>
+                <button type="button" onClick={() => setRetrySequence((value) => value + 1)}>
+                    {connectionMessages.retry}
+                </button>
             </div>
         );
     }

@@ -8,6 +8,10 @@ jest.mock('react-redux', () => ({
     useDispatch: () => mockDispatch
 }));
 
+jest.mock('react-i18next', () => ({
+    useTranslation: () => ({ i18n: { language: 'ko' } })
+}));
+
 jest.mock('../utils/router', () => ({
     getRouterBaseName: () => 'ethereum'
 }));
@@ -33,11 +37,13 @@ describe('AppWrapper RPC initialization', () => {
         mockGetWeb3.mockRejectedValueOnce(new Error('private provider URL must not be rendered'));
         const view = render(<AppWrapper />);
 
-        await wait(() => expect(view.getByText('Retry')).toBeTruthy());
+        await wait(() => expect(view.getByText('다시 시도')).toBeTruthy());
+        expect(view.getByText('블록체인 네트워크에 연결할 수 없습니다.')).toBeTruthy();
+        expect(view.getByText('연결 상태를 확인한 후 잠시 뒤 다시 시도해 주세요.')).toBeTruthy();
         expect(view.queryByText(/private provider URL/)).toBeNull();
 
         mockGetWeb3.mockResolvedValueOnce({ eth: {} });
-        fireEvent.click(view.getByText('Retry'));
+        fireEvent.click(view.getByText('다시 시도'));
 
         await wait(() => expect(view.getByTestId('ready-app')).toBeTruthy());
         expect(mockGetWeb3).toHaveBeenCalledTimes(2);

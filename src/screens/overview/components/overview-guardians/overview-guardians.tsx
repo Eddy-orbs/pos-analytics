@@ -4,8 +4,8 @@ import { Link } from 'react-router-dom';
 import { AppState } from 'redux/types/types';
 import { routes } from 'routes/routes';
 import { getGuardianColor } from 'utils/overview/overview';
-import CopyImg from 'assets/images/copy.svg';
 import { LoadingComponent } from 'components/loading-component/loading-component';
+import { AddressCopyButton } from 'components/address-copy-button/address-copy-button';
 import { LoaderType } from 'global/enums';
 import { useTranslation } from 'react-i18next';
 import { PosOverview, PosOverviewData } from '@orbs-network/pos-analytics-lib';
@@ -39,16 +39,18 @@ export const OverviewStakeGuadians = () => {
                                 : getGuardianColor(index);
                             return (
                                 <li key={index}>
-                                    <Link
-                                        to={routes.guardians.stake.replace(':address', guardian.address)}
-                                        className="flex-start-center">
-                                        <figure
-                                            style={{
-                                                background
-                                            }}></figure>
-                                        <p className="text-overflow">{guardian.name}</p>
-                                        <img src={CopyImg} alt="" />
-                                    </Link>
+                                    <div className="overview-guardian-row flex-start-center">
+                                        <Link
+                                            to={routes.guardians.stake.replace(':address', guardian.address)}
+                                            className="flex-start-center">
+                                            <figure
+                                                style={{
+                                                    background
+                                                }}></figure>
+                                            <p className="text-overflow">{guardian.name}</p>
+                                        </Link>
+                                        <AddressCopyButton address={guardian.address} subject="guardian" />
+                                    </div>
                                 </li>
                             );
                         })}

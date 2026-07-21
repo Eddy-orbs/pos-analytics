@@ -1,0 +1,13 @@
+.guardian-delegator-address {
+    max-width: 440px;
+
+    a {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .address-copy {
+        flex: none;
+        margin-left: auto;
+    }
+}
