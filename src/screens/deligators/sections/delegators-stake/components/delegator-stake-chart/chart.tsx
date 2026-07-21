@@ -17,5 +17,9 @@ export const Chart = ({ chartData }: StateProps) => {
         datasets: generateDatasets(chartData)
     };
     const options = getLineChartBaseSettings(chartData.unit, ref, t, isMobile);
-    return <Line data={data} options={options} ref={ref} />;
+    return (
+        <div className="line-chart-canvas">
+            <Line data={data} options={options} ref={ref} />
+        </div>
+    );
 };

@@ -1427,7 +1427,7 @@
 
 "@orbs-network/pos-analytics-lib@github:Eddy-orbs/pos-analytics-lib#eddy-rpc-limit-refactor":
   version "0.9.12"
-  resolved "git+ssh://git@github.com/Eddy-orbs/pos-analytics-lib.git#61e634d45deb1bfbfa048804e1529b3b1b91aaa9"
+  resolved "git+ssh://git@github.com/Eddy-orbs/pos-analytics-lib.git#f8c30a628bb687a7ae8752c01914f19a00083d09"
   dependencies:
     "@makerdao/multicall" "0.11.0"
     bignumber.js "^9.0.0"

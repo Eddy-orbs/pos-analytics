@@ -10,6 +10,7 @@ import { doesDetailRangeCover, getDetailHistoryStartTime } from 'redux/actions/d
 import { AppState } from 'redux/types/types';
 import { buildDelegatorDetailChartData } from 'utils/detail-chart-data';
 import { Chart } from './chart';
+import { getDelegatorHistoryMessages } from './delegator-history-messages';
 import './delegator-stake-chart.scss';
 
 
@@ -26,7 +27,8 @@ export const DelegatorStakeChart = () => {
         (state: AppState) => state.delegator
     );
     const { web3 } = useSelector((state: AppState) => state.main);
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
+    const historyMessages = getDelegatorHistoryMessages(i18n.language);
 
     const historyEntry = activeDelegatorKey
         ? historyByKey[activeDelegatorKey]
@@ -56,9 +58,7 @@ export const DelegatorStakeChart = () => {
         dispatch(loadDelegatorHistory(delegatorCurrent.address, web3, unit));
     };
     const noData = !delegatorIsLoading && !delegatorCurrent;
-    const historyError = !rangeAvailable && historyEntry && historyEntry.error
-        ? historyEntry.error || t('main.loadFailed')
-        : undefined;
+    const historyError = !rangeAvailable && historyEntry && historyEntry.error;
     const historyLoading = !!delegatorCurrent && !rangeAvailable && !historyError;
     return (
         noData ? null : <div className="delegator-stake-chart">
@@ -86,9 +86,9 @@ export const DelegatorStakeChart = () => {
                     </div>
                 ) : historyError ? (
                     <div className="delegator-stake-chart-feedback flex-column">
-                        <p>{historyError}</p>
+                        <p>{historyMessages.loadFailed}</p>
                         <button type="button" onClick={() => selectChartData(activeDelegatorHistoryUnit)}>
-                            {t('main.retry')}
+                            {historyMessages.retry}
                         </button>
                     </div>
                 ) : (
