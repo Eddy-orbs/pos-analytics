@@ -20,9 +20,13 @@ import { rewardsAbi } from './abis/rewards';
 import { feeBootstrapRewardAbi } from './abis/feebootstrap';
 import { guardianAbi } from './abis/guardian';
 
+// Production endpoints (Fastly proxy in front of The Graph gateway). Any standard
+// subgraph query URL works here - override via configurePosAnalyticsSubgraph, e.g.
+// the Studio dev endpoints https://api.studio.thegraph.com/query/55061/<slug>/v0.0.1
+// or a self-hosted graph-node.
 const defaultEndpoints: {[chainId: number]: string} = {
-    1: 'https://api.studio.thegraph.com/query/55061/orbs-pos-analytics-eth/v0.0.1',
-    137: 'https://api.studio.thegraph.com/query/55061/orbs-pos-analytics-pol/v0.0.1'
+    1: 'https://hub.orbs.network/posAnalyticsSubgraphEth',
+    137: 'https://hub.orbs.network/posAnalyticsSubgraphPol'
 };
 let endpoints = { ...defaultEndpoints };
 
