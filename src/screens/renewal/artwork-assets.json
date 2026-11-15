@@ -1,0 +1,20 @@
+{
+    "coin": {
+        "src": "/renewal/artwork/coin-180-c0e59f14d4.webp",
+        "srcSet": "/renewal/artwork/coin-180-c0e59f14d4.webp 1x, /renewal/artwork/coin-360-15497f4677.webp 2x, /renewal/artwork/coin-540-80ad3edae2.webp 3x",
+        "width": 180,
+        "height": 180
+    },
+    "shield": {
+        "src": "/renewal/artwork/shield-180-bd3fa358b4.webp",
+        "srcSet": "/renewal/artwork/shield-180-bd3fa358b4.webp 1x, /renewal/artwork/shield-360-d71bd8b947.webp 2x, /renewal/artwork/shield-540-a763a515e8.webp 3x",
+        "width": 180,
+        "height": 180
+    },
+    "wallet": {
+        "src": "/renewal/artwork/wallet-240-7025bcceb6.webp",
+        "srcSet": "/renewal/artwork/wallet-240-7025bcceb6.webp 1x, /renewal/artwork/wallet-480-d6ad871380.webp 2x, /renewal/artwork/wallet-720-31deba2de9.webp 3x",
+        "width": 240,
+        "height": 164
+    }
+}

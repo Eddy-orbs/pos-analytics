@@ -8,7 +8,7 @@
  */
 
 export { getDelegator, getDelegatorStakeHistory } from './delegator';
-export { getGuardian, getGuardians, getDelegators } from './guardian';
+export { getGuardian, getGuardians, getDelegators, getGuardianStakeView } from './guardian';
 export { getAllDelegators, getOverview } from './overview';
 export { getDelegatorStakingRewards, getGuardianStakingRewards } from './rewards';
 export { getStartOfDelegationBlock, getStartOfPosBlock, getStartOfRewardsBlock, getWeb3, getWeb3Polygon, getRefBlocks } from './eth-helpers';

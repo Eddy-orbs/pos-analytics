@@ -21,6 +21,7 @@ export interface PosOverview {
     n_committee: number;
     n_candidates: number;
     apy: number;
+    registered_guardians?: PosOverviewData[];
     slices: PosOverviewSlice[]
 }
 

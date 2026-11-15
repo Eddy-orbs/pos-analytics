@@ -56,6 +56,19 @@ export async function getGuardians(networkNodeUrls: string[], ethNodeEndpoints: 
     throw new Error(`Error while creating list of Guardians, all Netowrk Node URL failed to respond. ${fullError}`);
 }
 
+// Stake/profile UI does not need the rewards, fees, or registration event streams.
+export async function getGuardianStakeView(address: string, web3: any, refBlock?: {[chainId: number]: {time: number, number: number}}): Promise<Pick<GuardianInfo, 'stake_slices' | 'delegators'>> {
+    const current = await readGuardianDataFromState(address, web3);
+    const [delegation, staking] = await Promise.all([
+        getGuardianStakeAndDelegationChanges(address, current, web3, refBlock),
+        getGuardianStakeActions(address, current, web3, parseOptions({}), refBlock)
+    ]);
+    return {
+        stake_slices: [...delegation.delegationStakes, ...staking.stakesBeforeDelegation].sort((a,b)=>a.block_number-b.block_number),
+        delegators: Object.values(delegation.delegatorMap).filter(d=>d.stake!==0).sort((a,b)=>b.stake-a.stake)
+    };
+}
+
 export async function getGuardian(address: string, ethereumEndpoint: string | any, o?: PosOptions | any, refBlock?:{[chainId: number]: {time: number, number: number}}): Promise<GuardianInfo> {
     const options = parseOptions(o);
     const actions: GuardianAction[] = [];

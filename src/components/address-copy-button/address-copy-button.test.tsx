@@ -56,7 +56,7 @@ describe('AddressCopyButton', () => {
         );
 
         await act(async () => {
-            fireEvent.click(getByLabelText('Copy delegator address'));
+            fireEvent.click(getByLabelText(/^Copy delegator address/));
             await Promise.resolve();
         });
 
@@ -96,15 +96,24 @@ describe('AddressCopyButton', () => {
             value: execCommand
         });
 
-        const { getByLabelText, getByRole } = render(
-            <AddressCopyButton address={address} subject="guardian" />
-        );
+        const { getByLabelText, getByRole } = render(<AddressCopyButton address={address} subject="guardian" />);
 
-        fireEvent.click(getByLabelText('Copy guardian address'));
+        fireEvent.click(getByLabelText(/^Copy guardian address/));
 
         await wait(() => expect(getByRole('status').textContent).toBe('Address copied.'));
         expect(writeText).toHaveBeenCalledWith(address);
         expect(execCommand).toHaveBeenCalledWith('copy');
         expect(document.querySelector('textarea')).toBeNull();
     });
+});
+
+it('offers the full selectable address when clipboard and fallback fail', async () => {
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: vi.fn().mockRejectedValue(new Error('denied')) } });
+    Object.defineProperty(document, 'execCommand', { configurable: true, value: vi.fn().mockReturnValue(false) });
+    const { getByRole, queryByRole, unmount } = render(<AddressCopyButton address="0x123456" subject="guardian" />);
+    fireEvent.click(getByRole('button'));
+    await wait(() => expect(getByRole('alert')).toBeTruthy());
+    expect((getByRole('textbox') as HTMLInputElement).value).toBe('0x123456');
+    expect(queryByRole('status')).toBeNull();
+    unmount();
 });

@@ -43,7 +43,7 @@ describe('OverviewStakeGuadians', () => {
         );
 
         const guardianLink = getByText('Guardian One').closest('a');
-        const copyButton = getByLabelText('가디언 주소 복사');
+        const copyButton = getByLabelText(/^가디언 주소 복사/);
 
         expect(guardianLink && guardianLink.getAttribute('href')).toBe(`/guardians/stake/${address}`);
         expect(copyButton.closest('a')).toBeNull();

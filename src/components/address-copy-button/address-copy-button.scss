@@ -24,3 +24,24 @@
         z-index: 1000;
     }
 }
+
+.address-copy { position: relative; }
+.address-copy-hint {
+    display: none;
+    position: absolute;
+    bottom: 100%; right: 0; z-index: 60;
+    width: max-content; max-width: min(280px, 80vw);
+    overflow-wrap: anywhere; padding: 8px 12px; border-radius: 8px;
+    background: var(--rn-card, #253348); color: var(--rn-text, #fff);
+    border: 1px solid var(--rn-border, #74698f); font-size: 12px;
+    pointer-events: none;
+}
+.address-copy:hover .address-copy-hint,
+.address-copy:focus-within .address-copy-hint { display: block; }
+.address-copy-failure {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    z-index: 1001; width: min(440px, calc(100vw - 40px)); padding: 16px;
+    background: var(--rn-card, #253348); color: var(--rn-text, #fff);
+    border: 1px solid var(--rn-border, #74698f); border-radius: 12px;
+    input { display: block; width: 100%; margin-top: 8px; }
+}

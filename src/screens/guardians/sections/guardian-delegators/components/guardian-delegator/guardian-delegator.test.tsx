@@ -31,7 +31,7 @@ describe('GuardianDelegatorElement', () => {
         );
 
         const addressLink = getByText(address).closest('a');
-        const copyButton = getByLabelText('デリゲーターアドレスをコピー');
+        const copyButton = getByLabelText(/^デリゲーターアドレスをコピー/);
 
         expect(addressLink && addressLink.getAttribute('href')).toBe(`/delegators/stake/${address}`);
         expect(copyButton.closest('a')).toBeNull();

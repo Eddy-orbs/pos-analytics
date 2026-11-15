@@ -21,6 +21,7 @@ ReactDOM.render(
       </ConnectedRouter>
     </Provider>
   </Suspense>,
-  document.getElementById("root")
+  document.getElementById("root"),
+  () => document.documentElement.classList.remove("app-booting")
 )
 serviceWorker.unregister()

@@ -11,7 +11,10 @@ const CRA_VARS = [
     'REACT_APP_POLYGON_RPC',
     'REACT_APP_SUBGRAPH_ETH',
     'REACT_APP_SUBGRAPH_POLYGON',
-    'REACT_APP_EVENT_CACHE'
+    'REACT_APP_EVENT_CACHE',
+    'REACT_APP_DELEGATIONS_SUBGRAPH_ETH',
+    'REACT_APP_DELEGATIONS_SUBGRAPH_POLYGON',
+    'REACT_APP_COINGECKO_DEMO_API_KEY'
 ];
 
 export default defineConfig(({ mode }) => {
@@ -49,6 +52,9 @@ export default defineConfig(({ mode }) => {
             }
         },
         server: { port: 3001 },
+        preview: {
+            allowedHosts: ['analytics.orbs.kryp.xyz']
+        },
         build: {
             outDir: 'build', // keep CRA's output dir so the gh-pages deploy script is unchanged
             sourcemap: false

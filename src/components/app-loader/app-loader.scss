@@ -1,4 +1,8 @@
 .app-loader{
+    inset: 0;
+    box-sizing: border-box;
+    background: var(--app-loading-bg, #fff);
+    color: var(--app-loading-text, #171831);
     width: 100%;
     height: 100%;
     display: flex;
@@ -12,13 +16,16 @@
     z-index: 99;
     h5{
         font-size: 20px;
-        color: black;
+        color: inherit;
         margin: 0;
     }
     p{
+        color: var(--app-loading-muted, #77658f);
         margin: 0;
     }
     button{
+        background: var(--app-loading-button, #792bff);
+        color: var(--app-loading-button-text, #fff);
         border: 0;
         border-radius: 4px;
         padding: 8px 16px;

@@ -8,6 +8,7 @@ type AddressSubject = 'guardian' | 'delegator' | 'node';
 interface StateProps {
     address: string;
     subject: AddressSubject;
+    name?: string;
 }
 
 interface AddressCopyMessages {
@@ -24,8 +25,8 @@ export const getAddressCopyMessages = (language: string, subject: AddressSubject
                 subject === 'guardian'
                     ? '가디언 주소 복사'
                     : subject === 'delegator'
-                        ? '델리게이터 주소 복사'
-                        : '노드 주소 복사',
+                    ? '델리게이터 주소 복사'
+                    : '노드 주소 복사',
             copied: '주소가 복사되었습니다.'
         };
     }
@@ -36,8 +37,8 @@ export const getAddressCopyMessages = (language: string, subject: AddressSubject
                 subject === 'guardian'
                     ? 'ガーディアンアドレスをコピー'
                     : subject === 'delegator'
-                        ? 'デリゲーターアドレスをコピー'
-                        : 'ノードアドレスをコピー',
+                    ? 'デリゲーターアドレスをコピー'
+                    : 'ノードアドレスをコピー',
             copied: 'アドレスをコピーしました。'
         };
     }
@@ -47,8 +48,8 @@ export const getAddressCopyMessages = (language: string, subject: AddressSubject
             subject === 'guardian'
                 ? 'Copy guardian address'
                 : subject === 'delegator'
-                    ? 'Copy delegator address'
-                    : 'Copy node address',
+                ? 'Copy delegator address'
+                : 'Copy node address',
         copied: 'Address copied.'
     };
 };
@@ -87,23 +88,33 @@ const copyAddress = async (address: string): Promise<boolean> => {
     return fallbackCopy(address);
 };
 
-export const AddressCopyButton = ({ address, subject }: StateProps) => {
+export const AddressCopyButton = ({ address, subject, name }: StateProps) => {
     const { i18n } = useTranslation();
     const [copied, setCopied] = useState(false);
+    const [failed, setFailed] = useState(false);
     const hideTimer = useRef<number | undefined>(undefined);
     const mounted = useRef(true);
     const messages = getAddressCopyMessages(i18n.language, subject);
 
-    useEffect(() => () => {
-        mounted.current = false;
-        if (hideTimer.current !== undefined) window.clearTimeout(hideTimer.current);
-    }, []);
+    useEffect(
+        () => () => {
+            mounted.current = false;
+            if (hideTimer.current !== undefined) window.clearTimeout(hideTimer.current);
+        },
+        []
+    );
 
     const onCopy = async (event: React.MouseEvent<HTMLButtonElement>) => {
         event.preventDefault();
         event.stopPropagation();
 
-        if (!(await copyAddress(address)) || !mounted.current) return;
+        const success = await copyAddress(address);
+        if (!mounted.current) return;
+        setFailed(!success);
+        if (!success) {
+            setCopied(false);
+            return;
+        }
 
         setCopied(true);
         if (hideTimer.current !== undefined) window.clearTimeout(hideTimer.current);
@@ -114,9 +125,52 @@ export const AddressCopyButton = ({ address, subject }: StateProps) => {
 
     return (
         <span className="address-copy">
-            <button type="button" aria-label={messages.label} onClick={onCopy}>
-                <img src={CopyImg} alt="" />
+            <button
+                type="button"
+                aria-label={`${messages.label}: ${name || address}`}
+                title={`${messages.label}: ${address}`}
+                onClick={onCopy}
+            >
+                {copied ? <span aria-hidden="true">✓</span> : <img src={CopyImg} alt="" />}
             </button>
+            <span className="address-copy-hint" role="tooltip">
+                {messages.label}: {address}
+            </span>
+            {failed && (
+                <span className="address-copy-failure" role="alert">
+                    {i18n.language.startsWith('ko')
+                        ? '복사하지 못했습니다. 주소를 선택해 복사하세요.'
+                        : i18n.language.startsWith('ja')
+                        ? 'コピーできませんでした。アドレスを選択してコピーしてください。'
+                        : 'Copy failed. Select the address to copy it.'}
+                    <input
+                        aria-label={messages.label}
+                        readOnly
+                        value={address}
+                        onFocus={(e) => e.currentTarget.select()}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            e.currentTarget.select();
+                        }}
+                    />
+                    <button
+                        type="button"
+                        aria-label={
+                            i18n.language.startsWith('ko')
+                                ? '닫기'
+                                : i18n.language.startsWith('ja')
+                                ? '閉じる'
+                                : 'Close'
+                        }
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setFailed(false);
+                        }}
+                    >
+                        ×
+                    </button>
+                </span>
+            )}
             {copied ? (
                 <span className="address-copy-status" role="status" aria-live="polite">
                     {messages.copied}

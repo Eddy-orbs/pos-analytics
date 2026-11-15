@@ -5,7 +5,9 @@
 
 body {
   background: #fafafa;
-  font-family: 'Montserrat';
+  font-family: Montserrat, system-ui, sans-serif;
+  font-style: normal;
+  font-stretch: normal;
   min-width: 320px;
   overflow: hidden;
   overflow-wrap: break-word;
@@ -253,7 +255,7 @@ input::placeholder {
   z-index: 10;
   p {
     white-space: nowrap;
-    font-family: 'Montserrat';
+    font-family: Montserrat, system-ui, sans-serif;
     padding-left: 10px;
     padding-right: 10px;
     line-height: normal;

@@ -43,7 +43,7 @@ describe('GuardianInfo', () => {
 
         expect(container.querySelectorAll('.guardian-info-item')).toHaveLength(4);
 
-        fireEvent.click(getByLabelText('노드 주소 복사'));
+        fireEvent.click(getByLabelText(/^노드 주소 복사/));
 
         expect(writeText).toHaveBeenCalledTimes(1);
         expect(writeText).toHaveBeenCalledWith(nodeAddress);

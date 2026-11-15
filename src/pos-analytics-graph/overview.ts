@@ -105,6 +105,12 @@ async function parseRawData(data:any, ethereumEndpoint:string) : Promise<PosOver
         n_committee: data?.CurrentCommittee.length || 0,
         n_candidates: data?.CurrentCandidates.length || 0,
         apy,
+        registered_guardians: _.map(data.Guardians, guardian => ({
+            name: guardian.Name,
+            address: '0x' + String(guardian.EthAddress).replace(/^0x/i, '').toLowerCase(),
+            effective_stake: Number(guardian?.EffectiveStake || 0),
+            weight: 0,
+        })),
         slices
     }
 }

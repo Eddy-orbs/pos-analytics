@@ -4,8 +4,24 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#000000" />
+  <meta name="theme-color" content="#ffffff" />
+  <style>
+    :root { --app-loading-bg: #fff; --app-loading-text: #171831; --app-loading-muted: #77658f; --app-loading-button: #792bff; --app-loading-button-text: #fff; }
+    :root[data-theme="dark"] { --app-loading-bg: #130f1d; --app-loading-text: #f8f6ff; --app-loading-muted: #b7accb; --app-loading-button: #c7a7ff; --app-loading-button-text: #161122; }
+    html.app-booting, html.app-booting body { background: var(--app-loading-bg); color: var(--app-loading-text); }
+  </style>
+  <script>
+    // Apply the saved preference before the first paint and before the app bundle loads.
+    (function () {
+      var theme = 'light';
+      try { if (localStorage.getItem('overview-theme') === 'dark') theme = 'dark'; } catch (_) {}
+      document.documentElement.dataset.theme = theme;
+      document.documentElement.classList.add('app-booting');
+      document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#130f1d' : '#ffffff';
+    })();
+  </script>
   <meta name="description" content="ORBS PoS analytics - staking, delegations and rewards" />
+  <link rel="icon" type="image/png" href="/favicon-gradient.png" />
   <link rel="manifest" href="/manifest.json" />
   <title>Orbs PoS Analytics</title>
   <script>

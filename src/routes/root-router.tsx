@@ -1,33 +1,32 @@
 import { BrowserRouter as Router, Switch, Route, Redirect } from 'react-router-dom';
-import React, { FunctionComponent as Component } from 'react';
+import React from 'react';
 
 import { routes } from './routes';
-import { Delegators } from '../screens/deligators/delegators';
-import { NavigationMenu } from '../components/navigation-menu/navigation-menu';
-import { Guardians } from '../screens/guardians/guardians';
-import { Overview } from '../screens/overview/overview';
+import { RenewalDelegators as Delegators } from 'screens/renewal/delegators';
+import { AnalyticsLayout } from 'components/analytics-layout/analytics-layout';
+import { RenewalGuardians as Guardians } from 'screens/renewal/guardians';
 import { CHAINS } from 'types';
-import ChainSelector from 'components/ChainSelector';
+import { RenewalOverview } from '../screens/overview/renewal';
 
-interface Props{
-    chain: CHAINS
+interface Props {
+    chain: CHAINS;
 }
-export const RootRouter = ({chain}: Props) => {
+export const RootRouter = ({ chain }: Props) => {
     return (
         <Router basename={`${process.env.PUBLIC_URL}/${chain}`}>
-            <NavigationMenu />
-
-            <Switch>
-                <Route exact path="/">
-                    <Redirect to={routes.overview.stake} />
-                </Route>
-                <Route path={routes.overview.main} component={Overview} />
-                <Route path={routes.guardians.main} component={Guardians} />
-                <Route path={routes.delegators.main} component={Delegators} />
-                <Route>
-                <Redirect to={routes.overview.stake} />
-                </Route>
-            </Switch>
+            <AnalyticsLayout>
+                <Switch>
+                    <Route exact path="/">
+                        <Redirect to={routes.overview.stake} />
+                    </Route>
+                    <Route path={routes.overview.main} component={RenewalOverview} />
+                    <Route path={routes.guardians.main} component={Guardians} />
+                    <Route path={routes.delegators.main} component={Delegators} />
+                    <Route>
+                        <Redirect to={routes.overview.stake} />
+                    </Route>
+                </Switch>
+            </AnalyticsLayout>
         </Router>
     );
 };
