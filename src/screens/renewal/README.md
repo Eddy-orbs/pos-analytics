@@ -53,3 +53,54 @@ check both themes, narrow mobile/tablet/desktop, route re-entry, address resizin
   the staking CTA via showStakeCta (network selector restored 2026-11-09).
   Dark logo changes only the wordmark fill; the symbol gradients are untouched.
   Guardian card-view SVG path is exported from Figma node 137:676 (not a font glyph).
+
+### Subgraph failover
+
+- Official Hub remains the primary. Optional build-time `REACT_APP_SUBGRAPH_ETH_ALT`
+  and `REACT_APP_SUBGRAPH_POLYGON_ALT` configure backup event-history endpoints.
+  Local deployment sets these in ignored `.env.local`; other deployments must inject
+  them separately. They are public URLs, not credentials.
+- Each network request has a 12-second deadline, including response-body parsing.
+  Network/HTTP availability failures, invalid response bodies and server-side GraphQL
+  errors trigger one backup attempt. HTTP 400/422 and GraphQL validation errors do
+  not. Successful empty arrays remain valid results; partial/error responses are rejected.
+- Once a primary fails, subsequent requests for that endpoint use its backup until
+  full page reload. No failover preference is stored in localStorage/IndexedDB.
+  Reload starts primary-first for new network reads; existing data caches still work.
+  If backup also fails, errors propagate to existing loading-error/retry UI.
+- This covers `posAnalyticsSubgraphEth/Pol` history reads only, not RPC, management
+  node analytics, CoinGecko, or the unused legacy `querySubgraph` helper. It detects
+  request failures, not silently stale or semantically incorrect successful data.
+
+### Optional RPC failover
+
+- `REACT_APP_MAINNET_RPC_ALT` (Ethereum) and `REACT_APP_POLYGON_RPC_ALT`
+  are optional build-time backup URLs. Local `.env.local` contains empty entries
+  for the operator to fill. Empty/unset means primary-only; no public backup is assumed.
+- Web3 initialization, contract reads and Multicall use the same callback-compatible
+  provider. Each HTTP/body request has a 12-second timeout. Availability failures
+  switch read-only requests to ALT, whose chain ID is verified once (shared across
+  concurrent reads) before querying balances. A wrong-chain ALT fails explicitly.
+- Selection survives in-app navigation/retry but not a full reload. RPC execution
+  errors such as reverts remain errors, not outages. Transaction/signing methods are
+  never replayed to ALT. If both providers fail, existing error handling remains.
+- This is browser-side RPC: use HTTPS endpoints that allow browser CORS. URL changes
+  need a rebuild; any API key embedded in a frontend RPC URL is visible to clients.
+
+
+### Price cache and optional fallback key
+
+CoinGecko prices are stored in same-origin browser localStorage for 10 minutes,
+including across page navigation and reloads. Web Locks coalesce requests between
+supported browser tabs; memory caching remains available when storage is blocked.
+Hidden pages do not periodically refresh. Only successful prices are cached. Failed
+requests are not persisted or subject to a cooldown; reload retries immediately.
+
+Optional build-time `REACT_APP_COINGECKO_API_KEY_ALT` supplies a secondary **Demo**
+key for the same `api.coingecko.com` endpoint. Each refresh tries the primary first,
+then the distinct nonempty alternative once if the primary fails (including HTTP,
+timeout, or invalid data). Each attempt has an 8-second deadline. Successful fallback
+results use the same 10-minute cache. Missing ALT preserves primary-only behavior;
+if both fail, the widget displays dashes without breaking the page. Keys are never
+stored in the price cache, but REACT_APP build variables are public in the frontend
+bundle. This setting does not select the CoinGecko Pro API endpoint.

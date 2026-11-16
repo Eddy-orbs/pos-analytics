@@ -15,7 +15,7 @@ const chains: { [key in CHAINS]: IChain} = {
         rpc: MAINNET_RPC,
         node: ['https://0xcore-management-direct.global.ssl.fastly.net/analytics'],
         chainId: 1,
-        getWeb3: () => getWeb3(MAINNET_RPC),
+        getWeb3: () => getWeb3(MAINNET_RPC, true, process.env.REACT_APP_MAINNET_RPC_ALT),
         name:'Ethereum',
         logo: ethLogo,
         explorerUrl: ETHERSCAN_BLOCK_ADDRESS
@@ -24,7 +24,7 @@ const chains: { [key in CHAINS]: IChain} = {
         rpc: POLYGON_RPC,
         node: ['https://0xcore-matic-reader-direct.global.ssl.fastly.net/analytics'],
         chainId: 137,
-        getWeb3: () => getWeb3Polygon(POLYGON_RPC),
+        getWeb3: () => getWeb3Polygon(POLYGON_RPC, true, process.env.REACT_APP_POLYGON_RPC_ALT),
         name:'Polygon',
         logo: polygonLogo,
         explorerUrl: POLYGONSCAN_BLOCK_ADDRESS

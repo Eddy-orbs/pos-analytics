@@ -8,6 +8,7 @@
 
 import _ from 'lodash';
 import Web3 from 'web3';
+import { getAnalyticsRpcProvider } from './rpc-provider';
 import BigNumber from 'bignumber.js';
 // @ts-ignore
 import { aggregate } from '@makerdao/multicall';
@@ -66,8 +67,8 @@ interface ContractValidData {
 
 interface ContractsData {[key:string]: ContractValidData[]};
 
-export async function getWeb3(ethereumEndpoint: string, readContracts:boolean = true) {
-   const web3 = new Web3(new Web3.providers.HttpProvider(ethereumEndpoint, {keepAlive: true,}));
+export async function getWeb3(ethereumEndpoint: string, readContracts:boolean = true, alternativeEndpoint?: string) {
+   const web3 = new Web3(getAnalyticsRpcProvider(ethereumEndpoint, alternativeEndpoint, 1) as any);
     web3.eth.transactionBlockTimeout = 0; // to stop web3 from polling pending tx
     web3.eth.transactionPollingTimeout = 0; // to stop web3 from polling pending tx
     web3.eth.transactionConfirmationBlocks = 1; // to stop web3 from polling pending tx
@@ -90,8 +91,8 @@ export async function getWeb3(ethereumEndpoint: string, readContracts:boolean = 
     return web3;
 }
 
-export async function getWeb3Polygon(ethereumEndpoint: string, readContracts:boolean = true) {
-    const web3 = new Web3(new Web3.providers.HttpProvider(ethereumEndpoint, {keepAlive: true,}));
+export async function getWeb3Polygon(ethereumEndpoint: string, readContracts:boolean = true, alternativeEndpoint?: string) {
+    const web3 = new Web3(getAnalyticsRpcProvider(ethereumEndpoint, alternativeEndpoint, 137) as any);
     web3.eth.transactionBlockTimeout = 0; // to stop web3 from polling pending tx
     web3.eth.transactionPollingTimeout = 0; // to stop web3 from polling pending tx
     web3.eth.transactionConfirmationBlocks = 1; // to stop web3 from polling pending tx

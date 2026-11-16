@@ -12,7 +12,7 @@
 // shaped like web3 getPastEvents results, so the aggregation code is unchanged.
 
 import Web3 from 'web3';
-import { retry } from 'ts-retry-promise';
+import { createSubgraphTransport } from './subgraph-transport';
 import {
     getStreamCacheReorgMargin,
     isStreamCacheEnabled,
@@ -37,10 +37,18 @@ const defaultEndpoints: {[chainId: number]: string} = {
     137: 'https://hub.orbs.network/posAnalyticsSubgraphPol'
 };
 let endpoints = { ...defaultEndpoints };
+const transport = createSubgraphTransport();
 
 // Override the subgraph query endpoints (e.g. production proxy behind hub.orbs.network).
-export function configurePosAnalyticsSubgraph(overrides: {[chainId: number]: string}) {
+export function configurePosAnalyticsSubgraph(overrides: {[chainId: number]: string}, alternatives: {[chainId: number]: string} = {}) {
     endpoints = { ...endpoints, ...overrides };
+    const pairs: Record<string, string> = {};
+    for (const chain of Object.keys(alternatives)) {
+        const primary = endpoints[Number(chain)];
+        const alternative = alternatives[Number(chain)]?.trim();
+        if (primary && alternative && primary !== alternative) pairs[primary] = alternative;
+    }
+    transport.configure(pairs);
 }
 
 export function getSubgraphEndpoint(chainId: number): string {
@@ -143,18 +151,7 @@ export function specsForContract(contract: string): EventSpec[] {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function postQuery(endpoint: string, query: string): Promise<any> {
-    // exponential backoff - the Studio dev endpoint rate-limits bursts with HTTP 429
-    return retry(async () => {
-        const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ query })
-        });
-        if (!response.ok) throw new Error(`subgraph HTTP ${response.status}`);
-        const { data, errors } = await response.json();
-        if (errors) throw new Error(`subgraph errors: ${JSON.stringify(errors).slice(0, 300)}`);
-        return data;
-    }, { retries: 6, delay: 500, backoff: 'EXPONENTIAL', maxBackOff: 10000 });
+    return transport.post(endpoint, query);
 }
 
 export interface StreamQuery {

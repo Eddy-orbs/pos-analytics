@@ -24,7 +24,10 @@ const setupSubgraphEndpoints = () => {
     const overrides: { [chainId: number]: string } = {};
     if (process.env.REACT_APP_SUBGRAPH_ETH) overrides[1] = process.env.REACT_APP_SUBGRAPH_ETH;
     if (process.env.REACT_APP_SUBGRAPH_POLYGON) overrides[137] = process.env.REACT_APP_SUBGRAPH_POLYGON;
-    if (Object.keys(overrides).length) configurePosAnalyticsSubgraph(overrides);
+    const alternatives: { [chainId: number]: string } = {};
+    if (process.env.REACT_APP_SUBGRAPH_ETH_ALT) alternatives[1] = process.env.REACT_APP_SUBGRAPH_ETH_ALT;
+    if (process.env.REACT_APP_SUBGRAPH_POLYGON_ALT) alternatives[137] = process.env.REACT_APP_SUBGRAPH_POLYGON_ALT;
+    configurePosAnalyticsSubgraph(overrides, alternatives);
 };
 
 const setupStreamCache = async () => {

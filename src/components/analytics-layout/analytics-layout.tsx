@@ -7,7 +7,7 @@ import { SupportedLanguage } from 'global/types';
 import { OVERVIEW_STATUS_LINK } from 'global/variables';
 import { renewalLabels } from 'screens/overview/renewal-labels';
 import { fetchNetworkStatus, NetworkStatus, RootNodeHealth } from 'screens/overview/root-node-health';
-import { fetchOrbsPrice, OrbsPrice } from 'screens/overview/orbs-price';
+import { fetchOrbsPrice, OrbsPrice, ORBS_PRICE_CACHE_KEY } from 'screens/overview/orbs-price';
 import 'screens/overview/renewal.scss';
 
 const NetworkContext = createContext<{
@@ -25,10 +25,23 @@ function PriceWidget() {
             if (mounted) setPrice(result);
         };
         void refresh();
-        const interval = setInterval(refresh, 60000);
+        // Poll the shared browser cache; network refresh is limited to once / 10 min.
+        const interval = setInterval(() => {
+            if (document.visibilityState !== 'hidden') void refresh();
+        }, 60000);
+        const onVisible = () => {
+            if (document.visibilityState === 'visible') void refresh();
+        };
+        const onStorage = (event: StorageEvent) => {
+            if (event.key === ORBS_PRICE_CACHE_KEY) void refresh();
+        };
+        document.addEventListener('visibilitychange', onVisible);
+        window.addEventListener('storage', onStorage);
         return () => {
             mounted = false;
             clearInterval(interval);
+            document.removeEventListener('visibilitychange', onVisible);
+            window.removeEventListener('storage', onStorage);
         };
     }, []);
     const change = price?.change24h;
