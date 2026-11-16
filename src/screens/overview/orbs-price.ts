@@ -9,7 +9,7 @@ export function parseOrbsPrice(payload: unknown): OrbsPrice | null {
 }
 
 export async function fetchOrbsPrice(): Promise<OrbsPrice | null> {
-    const key = process.env.REACT_APP_COINGECKO_DEMO_API_KEY;
+    const key = process.env.REACT_APP_COINGECKO_API_KEY;
     const url = key ? `${ORBS_PRICE_URL}&x_cg_demo_api_key=${encodeURIComponent(key)}` : ORBS_PRICE_URL;
     const controller = new AbortController();
     let timer: ReturnType<typeof setTimeout> | undefined;
