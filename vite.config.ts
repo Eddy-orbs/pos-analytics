@@ -29,7 +29,9 @@ export default defineConfig(({ mode }) => {
         'process.env.PUBLIC_URL': JSON.stringify(''),
         'process.env.NODE_ENV': JSON.stringify(mode === 'production' ? 'production' : 'development')
     };
-    for (const key of CRA_VARS) {
+    // Keep test env reads dynamic so vi.stubEnv works without a local .env file.
+    // App builds still inline these values (or undefined for optional settings).
+    for (const key of mode === 'test' ? [] : CRA_VARS) {
         define[`process.env.${key}`] = env[key] !== undefined ? JSON.stringify(env[key]) : 'undefined';
     }
     return {
