@@ -7,8 +7,8 @@ import { ETHERSCAN_BLOCK_ADDRESS, POLYGONSCAN_BLOCK_ADDRESS } from 'keys/keys';
 
 // Public own-infra defaults so the app builds and runs with no .env at all;
 // REACT_APP_* env vars remain as overrides (e.g. for local experiments).
-const MAINNET_RPC = process.env.REACT_APP_MAINNET_RPC || 'https://rpcman.orbs.network/rpc?chainId=1&appId=pos-analytics';
-const POLYGON_RPC = process.env.REACT_APP_POLYGON_RPC || 'https://rpcman.orbs.network/rpc?chainId=137&appId=pos-analytics';
+const MAINNET_RPC = process.env.REACT_APP_MAINNET_RPC || 'https://rpcman.orbs.network/rpc?chainId=1&appId=pos-analytics&key=p_nrSD12d1IcHZlCWh8jYw5riewHwMnFT-ahURNzTk0';
+const POLYGON_RPC = process.env.REACT_APP_POLYGON_RPC || 'https://rpcman.orbs.network/rpc?chainId=137&appId=pos-analytics&key=p_nrSD12d1IcHZlCWh8jYw5riewHwMnFT-ahURNzTk0';
 
 const chains: { [key in CHAINS]: IChain} = {
     [CHAINS.ETHEREUM]: {
